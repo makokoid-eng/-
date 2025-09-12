@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>食習慣改善LINE Bot｜写真を送るだけ、AIが栄養サポート</title>
+  <meta name="description" content="LINEで食事写真を送るだけ。AIが要約と栄養推定（野菜g・たんぱく質g・kcal）を返し、行動改善を支援します。医療機関の栄養指導の省力化にも。">
+  <meta property="og:title" content="食習慣改善LINE Bot" />
+  <meta property="og:description" content="写真を送るだけ。AIが要約と栄養推定（野菜g/たんぱく質g/kcal）を返信。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="assets/images/hero.png" />
+  <style>
+    :root { --max:1100px; --pad:16px; --radius:12px; }
+    *{box-sizing:border-box} html,body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP","Helvetica Neue",Arial,"メイリオ",sans-serif;line-height:1.6;color:#111;}
+    img{max-width:100%;display:block}
+    a{color:inherit}
+    .container{max-width:var(--max);margin:0 auto;padding:0 var(--pad)}
+    .btn{display:inline-block;padding:12px 18px;border:1px solid #111;border-radius:8px;text-decoration:none}
+    .btn.primary{background:#111;color:#fff;border-color:#111}
+    .btn.ghost{background:transparent}
+    .badge{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid #ddd;font-size:12px;color:#555}
+
+    header{position:sticky;top:0;background:#fff;border-bottom:1px solid #eee;z-index:10}
+    .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
+    .logo{display:flex;align-items:center;gap:10px;font-weight:700}
+    .logo svg{width:28px;height:28px}
+    .nav a{margin-left:16px;font-size:14px;text-decoration:none}
+    .nav .actions{display:flex;align-items:center}
+
+    .hero{padding:56px 0 24px}
+    .hero-grid{display:grid;grid-template-columns:1.05fr 0.95fr;gap:28px;align-items:center}
+    .hero h1{font-size:36px;line-height:1.2;margin:12px 0}
+    .hero p.lead{font-size:16px;color:#333}
+    .hero-cta{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
+    .hero-figure{border:1px solid #eee;border-radius:var(--radius);overflow:hidden}
+
+    section{padding:56px 0;border-top:1px solid #f3f3f3}
+    h2{font-size:26px;margin:0 0 8px}
+    .sub{color:#666;margin-bottom:20px}
+    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .card{border:1px solid #eee;border-radius:var(--radius);padding:18px}
+    .card h3{margin:0 0 6px;font-size:18px}
+    .how{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+    .how .step{border:1px solid #eee;border-radius:var(--radius);padding:16px}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    .note{font-size:13px;color:#555}
+
+    footer{padding:40px 0;color:#666}
+
+    @media (max-width:900px){
+      .hero-grid{grid-template-columns:1fr}
+      .grid-3{grid-template-columns:1fr}
+      .how{grid-template-columns:1fr 1fr}
+      .two{grid-template-columns:1fr}
+    }
+    @media (max-width:560px){
+      .how{grid-template-columns:1fr}
+      .hero h1{font-size:28px}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="logo">
+        <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="6" y="6" width="52" height="52" rx="12" stroke="#111" stroke-width="3"/>
+          <path d="M18 36c6 4 10 6 14 6 8 0 14-6 14-14s-6-14-14-14-14 6-14 14" stroke="#111" stroke-width="3" fill="none"/>
+          <circle cx="26" cy="28" r="3" fill="#111"/>
+        </svg>
+        <span>食習慣改善LINE Bot</span>
+      </div>
+      <div class="actions">
+        <a href="#features">特徴</a>
+        <a href="#how">使い方</a>
+        <a href="#diabetes">糖尿病ケア</a>
+        <a href="#for">医療機関向け</a>
+        <a href="#faq">FAQ</a>
+        <a class="btn ghost" href="#contact">お問い合わせ</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div>
+          <span class="badge">写真を送るだけ／AIが要約と栄養推定</span>
+          <h1>“食べた”を手放しで可視化。<br>LINEで、食習慣の改善を。</h1>
+          <p class="lead">
+            食事写真を1枚送ると、AIが内容を要約して
+            <strong>野菜量（g）・たんぱく質（g）・kcal</strong> を推定。<br>
+            「OK」タップで記録、ズレは「修正」で微調整。<br>
+            医療機関の栄養指導や、個人のセルフケアに。
+          </p>
+          <div class="hero-cta">
+            <a class="btn primary" href="#" aria-label="LINEで友だち追加">LINEで友だち追加</a>
+            <a class="btn" href="#demo">1分で分かるデモを見る</a>
+          </div>
+          <p class="note" style="margin-top:8px;">※数値は推定です。医療判断は主治医の指示に従ってください。</p>
+        </div>
+        <div class="hero-figure">
+          <img src="assets/images/hero.png" alt="LINEで写真送信→AIが要約＆栄養推定のデモ" />
+        </div>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="container">
+        <h2>3つの特徴</h2>
+        <p class="sub">無理なく、続けられる。現場でも使える。</p>
+        <div class="grid-3">
+          <div class="card">
+            <h3>① 写真→即フィードバック</h3>
+            <p>撮って送るだけ。要約と推定数値を数秒で返答。OK/修正の2タップで記録完了。</p>
+          </div>
+          <div class="card">
+            <h3>② 医療現場フレンドリー</h3>
+            <p>患者さんの週報・推移を集計しやすい設計（スプレッドシート連携）。栄養指導の前段を省力化。</p>
+          </div>
+          <div class="card">
+            <h3>③ プライバシーに配慮</h3>
+            <p>最小限のデータを安全に保管。削除・エクスポートにも対応予定。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="how">
+      <div class="container">
+        <h2>使い方</h2>
+        <p class="sub">4ステップでシンプルに。</p>
+        <div class="how">
+          <div class="step">
+            <strong>1. 友だち追加</strong>
+            <p>初回は生活スタイル・目標・NG食材などの簡易アンケート。</p>
+          </div>
+          <div class="step">
+            <strong>2. 写真を送る</strong>
+            <p>テキストでもOK。AIが要約と栄養推定を返信します。</p>
+          </div>
+          <div class="step">
+            <strong>3. OK / 修正</strong>
+            <p>そのまま記録 or ボタンで微調整。確定後に保存。</p>
+          </div>
+          <div class="step">
+            <strong>4. 週報</strong>
+            <p>摂取傾向を見える化。医師・栄養士への共有もラクに。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="demo">
+      <div class="container two">
+        <div>
+          <h2>1分デモ</h2>
+          <p class="sub">実際の操作感を確認できます。</p>
+          <div class="card">
+            <img src="assets/images/demo.png" alt="操作デモ（差し替え）">
+          </div>
+          <p class="note">※動画は開発中の画面です。仕様は予告なく変更される場合があります。</p>
+        </div>
+        <div>
+          <h2>ロードマップ</h2>
+          <ul>
+            <li>OK確定ポストバック／修正フローの実装</li>
+            <li>スプレッドシート保存・週報自動化</li>
+            <li>感情ログ（食後の満足度・元気度）</li>
+            <li>DEV/PROD 分離による安定運用</li>
+          </ul>
+          <p class="note">年内クラウドファンディングを予定。医療従事者向けトライアル枠を用意します。</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="diabetes">
+      <div class="container">
+        <h2>糖尿病ケアへのつなげ方</h2>
+        <p class="sub">「食事ログ × 血糖データ」の文脈化で、面談の質を上げる。</p>
+
+        <div class="two">
+          <div class="card">
+            <h3>臨床での使い方（例）</h3>
+            <ul>
+              <li>食事写真と推定値を週単位で一覧化（野菜量・たんぱく質・kcal）。</li>
+              <li>自己測定血糖値（SMBG）の任意入力欄を設置（食前/食後1h/2h）。</li>
+              <li>運動・服薬・就寝時刻など簡易タグを取得（オン/オフ式）。</li>
+              <li>「食後高値が出やすい食事パターン」を自動抽出（将来機能）。</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>データ項目（将来のCSV/シート設計）</h3>
+            <ul>
+              <li>date/time, meal_type(朝/昼/夕/間食), veg_g, protein_g, kcal</li>
+              <li>pre_bg, bg_1h, bg_2h（任意入力）</li>
+              <li>carb_flag, fiber_flag, exercise_flag(±), med_flag(服薬有無)</li>
+              <li>summary（AI要約）, note（自由記述）</li>
+            </ul>
+            <p class="note">※医療判断の代替ではありません。各医療機関の運用方針に従ってください。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="for">
+      <div class="container two">
+        <div class="card">
+          <h3>医療機関・栄養指導向け</h3>
+          <ul>
+            <li>患者の食事ログを自動収集（LINEで導入ハードル低）</li>
+            <li>週報の下書き自動生成→面談に集中</li>
+            <li>対象：2型糖尿病、肥満、脂質異常症、高血圧 等</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>個人利用</h3>
+          <ul>
+            <li>写真を送るだけで“なんとなく”を可視化</li>
+            <li>野菜・たんぱく質の不足を自覚→行動に落としやすい</li>
+            <li>「今日はOK」「明日は少し調整」…無理なく続く</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="container">
+        <h2>FAQ</h2>
+        <div class="grid-3">
+          <div class="card">
+            <h3>推定はどの程度正確ですか？</h3>
+            <p>調理や盛り付けにより誤差が生じます。医療判断の代替ではありません。面談時の材料としてご活用ください。</p>
+          </div>
+          <div class="card">
+            <h3>プライバシーは大丈夫？</h3>
+            <p>最小限のデータをスプレッドシート等に保管し、削除リクエストにも対応予定。詳細はプライバシーポリシーをご参照ください。</p>
+          </div>
+          <div class="card">
+            <h3>医療機関で使えますか？</h3>
+            <p>栄養指導の補助としてご利用いただけます。各種法令の適用範囲は施設側でご確認ください。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact">
+      <div class="container">
+        <h2>お問い合わせ・事前登録</h2>
+        <p class="sub">医療従事者の方にはトライアル枠をご案内予定です。</p>
+        <div class="two">
+          <form class="card" onsubmit="alert('送信先（Googleフォームなど）を設定してください。'); return false;">
+            <label>お名前（必須）<br><input type="text" name="name" required style="width:100%;padding:10px;margin-top:6px;border:1px solid #ccc;border-radius:8px;"></label><br><br>
+            <label>メールアドレス（必須）<br><input type="email" name="email" required style="width:100%;padding:10px;margin-top:6px;border:1px solid #ccc;border-radius:8px;"></label><br><br>
+            <label>ご所属（任意）<br><input type="text" name="org" style="width:100%;padding:10px;margin-top:6px;border:1px solid #ccc;border-radius:8px;"></label><br><br>
+            <label>区分<br>
+              <select name="type" style="width:100%;padding:10px;margin-top:6px;border:1px solid #ccc;border-radius:8px;">
+                <option>医療従事者（医師・栄養士・看護師 等）</option>
+                <option>個人利用</option>
+                <option>その他（取材・協業 等）</option>
+              </select>
+            </label><br><br>
+            <label>メッセージ（任意）<br>
+              <textarea name="msg" rows="4" style="width:100%;padding:10px;margin-top:6px;border:1px solid #ccc;border-radius:8px;"></textarea>
+            </label><br><br>
+            <button class="btn primary" type="submit">送信</button>
+          </form>
+          <div class="card">
+            <h3>ニュースレター</h3>
+            <p>アップデートやクラファン開始をメールでお知らせします。</p>
+            <form onsubmit="alert('送信先（メールリスト）を設定してください。'); return false;">
+              <label>メールアドレス<br><input type="email" required style="width:100%;padding:10px;margin-top:6px;border:1px solid #ccc;border-radius:8px;"></label><br><br>
+              <button class="btn" type="submit">登録する</button>
+            </form>
+            <p class="note" style="margin-top:10px;">※スパムは送りません。いつでも配信停止できます。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>© 2025 食習慣改善LINE Bot</div>
+        <div style="display:flex;gap:16px;">
+          <a href="terms.html">利用規約</a>
+          <a href="privacy.html">プライバシーポリシー</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
