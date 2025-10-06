@@ -9,7 +9,7 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="食習慣サポートLINE Bot">
   <meta property="og:description" content="写真を送るだけ。AIが要約と栄養の“目安”を返信。日々の食事記録の補助に。">
-  <meta property="og:image" content="assets/images/hero.png">
+ <meta property="og:image" content="assets/images/hero.png" />
   <meta property="og:locale" content="ja_JP">
 
   <style>
@@ -38,8 +38,13 @@
     .btn.ghost{background:transparent}
 
     /* Hero */
-    .hero{padding:70px 0 34px;border-bottom:1px solid var(--line);
-      background:linear-gradient(180deg, rgba(250,248,244,.88), rgba(250,248,244,.92)), url('assets/images/hero.png') center/cover no-repeat;}
+    .hero{
+  padding:72px 0 32px;
+  background:
+    linear-gradient(180deg, rgba(250,248,244,.85), rgba(250,248,244,.9)),
+    url('assets/images/bg-lantern.jpg') center/cover no-repeat;
+  border-bottom:1px solid var(--line);
+}
     .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:28px;align-items:center}
     .badge{display:inline-block;font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:6px 10px;background:#fff8}
     h1{font-size:36px;line-height:1.25;margin:14px 0 8px}
@@ -115,10 +120,9 @@
             ※表示される数値はあくまで目安です。体調・食事管理に関する判断は担当の専門職にご相談ください。
           </p>
         </div>
-        <div class="hero-figure">
-          <!-- 実画像に合わせて src を差し替え -->
-          <img src="assets/images/meal1.jpg" alt="LINEで写真→目安を返信するデモ">
-        </div>
+       <div class="hero-figure">
+  <img src="assets/images/hero.png" alt="LINEで写真送信→AIが要約＆栄養推定のデモ" />
+</div>
       </div>
     </section>
 
@@ -165,7 +169,7 @@
           <h2>1分デモ</h2>
           <p class="sub">実際の操作感を確認できます。</p>
           <div class="card">
-            <img src="assets/images/meal2.jpg" alt="操作デモ（仮画像）">
+           <img src="assets/images/demo-01.png" alt="操作デモ">
           </div>
           <p class="note">※画面は開発中です。仕様は今後変更される場合があります。</p>
         </div>
