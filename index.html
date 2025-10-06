@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>食習慣サポートLINE Bot｜写真を送るだけで目安フィードバック</title>
   <meta name="description" content="LINEで食事写真を送ると、AIが内容を要約して野菜・たんぱく質・kcalの“目安”を返信。日々のふり返りや記録づくりをシンプルに。">
+
   <!-- OGP -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="食習慣サポートLINE Bot">
   <meta property="og:description" content="写真を送るだけ。AIが要約と栄養の“目安”を返信。日々の食事記録の補助に。">
- <meta property="og:image" content="assets/images/hero.png" />
+  <!-- 可能なら絶対URLにしてください -->
+  <meta property="og:image" content="https://makokoid-eng.github.io/assets/images/hero.png">
   <meta property="og:locale" content="ja_JP">
 
   <style>
@@ -20,12 +22,14 @@
       --shadow:0 3px 18px rgba(0,0,0,.06);
     }
     *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP","Helvetica Neue",Arial,"メイリオ",sans-serif;line-height:1.75}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP","Helvetica Neue",Arial,"メイリオ",sans-serif;line-height:1.75}
     img{max-width:100%;display:block}
     a{color:inherit;text-decoration:none}
     .container{max-width:var(--max);margin:0 auto;padding:0 var(--pad)}
 
-    header{position:sticky;top:0;z-index:20;background:rgba(250,248,244,.85);backdrop-filter:saturate(140%) blur(6px);border-bottom:1px solid var(--line)}
+    header{position:sticky;top:0;z-index:20;background:rgba(250,248,244,.85);
+      backdrop-filter:saturate(140%) blur(6px);border-bottom:1px solid var(--line)}
     .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
     .logo{display:flex;gap:10px;align-items:center;font-weight:700}
     .logo img{width:28px;height:28px;border-radius:6px}
@@ -33,24 +37,27 @@
     .navlinks a:hover{color:var(--ink)}
     .actions{display:flex;gap:10px;align-items:center}
 
-    .btn{display:inline-block;padding:12px 18px;border:1px solid var(--ink);border-radius:999px;background:var(--paper);box-shadow:var(--shadow)}
+    .btn{display:inline-block;padding:12px 18px;border:1px solid var(--ink);
+      border-radius:999px;background:var(--paper);box-shadow:var(--shadow)}
     .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
     .btn.ghost{background:transparent}
 
-    /* Hero */
+    /* ===== Hero ===== */
     .hero{
-  padding:72px 0 32px;
-  background:
-    linear-gradient(180deg, rgba(250,248,244,.85), rgba(250,248,244,.9)),
-    url('assets/images/bg-lantern.jpg') center/cover no-repeat;
-  border-bottom:1px solid var(--line);
-}
+      padding:72px 0 32px;
+      background:
+        linear-gradient(180deg, rgba(250,248,244,.85), rgba(250,248,244,.9)),
+        url('assets/images/bg-lantern.jpg') center/cover no-repeat;
+      border-bottom:1px solid var(--line);
+    }
     .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:28px;align-items:center}
-    .badge{display:inline-block;font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:6px 10px;background:#fff8}
+    .badge{display:inline-block;font-size:12px;color:var(--muted);border:1px solid var(--line);
+      border-radius:999px;padding:6px 10px;background:#fff8}
     h1{font-size:36px;line-height:1.25;margin:14px 0 8px}
     .lead{color:var(--muted)}
     .hero-cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}
-    .hero-figure{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);background:var(--paper)}
+    .hero-figure{border:1px solid var(--line);border-radius:var(--radius);
+      overflow:hidden;box-shadow:var(--shadow);background:var(--paper)}
 
     section{padding:56px 0;border-top:1px solid var(--line)}
     h2{font-size:26px;margin:0 0 8px}
@@ -78,7 +85,7 @@
   </style>
 </head>
 <body>
-  <!-- =================== Header =================== -->
+  <!-- ============== Header ============== -->
   <header>
     <div class="container nav">
       <div class="logo">
@@ -93,40 +100,40 @@
         <a href="#faq">FAQ</a>
         <a href="#contact">お問い合わせ</a>
       </nav>
-      <div class="actions social">
-        <a class="btn ghost" href="https://x.com/intent/follow?screen_name=YOUR_X_ID"waveblasttaiyo="X を開く">X</a>
-        <<a class="btn primary" href="https://lin.ee/227zyjps"target=_blank"rel="noopener">LINEで友だち追加">LINEで使う</a>
+      <div class="actions">
+        <!-- あなたのXのIDに置き換えてください -->
+        <a class="btn ghost" href="https://x.com/intent/follow?screen_name=YOUR_X_ID" target="_blank" rel="noopener">X</a>
+        <a class="btn primary" href="https://lin.ee/227zyjps" target="_blank" rel="noopener" aria-label="LINEで友だち追加">LINEで使う</a>
       </div>
     </div>
   </header>
 
   <main>
-    <!-- =================== Hero =================== -->
+    <!-- ============== Hero ============== -->
     <section class="hero">
       <div class="container hero-grid">
         <div>
           <span class="badge">写真を送るだけ／AIが要約と数値の目安</span>
           <h1>“食べた”を気軽に見える化。<br>LINEで、毎日のふり返りを。</h1>
           <p class="lead">
-            写真を1枚送ると、AIが<strong>野菜量・たんぱく質・kcal</strong>の
-            <strong>目安</strong>と要約を返信します。<br>
+            写真を1枚送ると、AIが<strong>野菜量・たんぱく質・kcal</strong>の<strong>目安</strong>と要約を返信します。<br>
             「OK」で記録、ズレは「修正」で微調整。自分の振り返りや、必要に応じた情報共有の素材づくりに。
           </p>
           <div class="hero-cta">
-            <a class="btn primary" href="#" aria-label="LINEで友だち追加">LINEで使い始める</a>
+            <a class="btn primary" href="https://lin.ee/227zyjps" target="_blank" rel="noopener" aria-label="LINEで友だち追加">LINEで使い始める</a>
             <a class="btn" href="#demo">1分デモを見る</a>
           </div>
           <p class="note" style="margin-top:10px;">
             ※表示される数値はあくまで目安です。体調・食事管理に関する判断は担当の専門職にご相談ください。
           </p>
         </div>
-       <div class="hero-figure">
-  <img src="assets/images/hero.png" alt="LINEで写真送信→AIが要約＆栄養推定のデモ" />
-</div>
+        <div class="hero-figure">
+          <img src="assets/images/hero.png" alt="LINEで写真送信→AIが要約＆栄養の目安を返信するデモ">
+        </div>
       </div>
     </section>
 
-    <!-- =================== 特徴 =================== -->
+    <!-- ============== 特徴 ============== -->
     <section id="features">
       <div class="container">
         <h2>3つの特徴</h2>
@@ -148,7 +155,7 @@
       </div>
     </section>
 
-    <!-- =================== 使い方 =================== -->
+    <!-- ============== 使い方 ============== -->
     <section id="how">
       <div class="container">
         <h2>使い方</h2>
@@ -162,14 +169,14 @@
       </div>
     </section>
 
-    <!-- =================== デモ / ロードマップ =================== -->
+    <!-- ============== デモ / ロードマップ ============== -->
     <section id="demo">
       <div class="container two">
         <div>
           <h2>1分デモ</h2>
           <p class="sub">実際の操作感を確認できます。</p>
           <div class="card">
-           <img src="assets/images/demo-01.png" alt="操作デモ">
+            <img src="assets/images/demo-01.png" alt="操作デモ">
           </div>
           <p class="note">※画面は開発中です。仕様は今後変更される場合があります。</p>
         </div>
@@ -185,7 +192,7 @@
       </div>
     </section>
 
-    <!-- =================== 活用例 =================== -->
+    <!-- ============== 活用例 ============== -->
     <section id="for">
       <div class="container two">
         <div class="card">
@@ -207,7 +214,7 @@
       </div>
     </section>
 
-    <!-- =================== FAQ =================== -->
+    <!-- ============== FAQ ============== -->
     <section id="faq">
       <div class="container">
         <h2>FAQ</h2>
@@ -228,7 +235,7 @@
       </div>
     </section>
 
-    <!-- =================== お問い合わせ =================== -->
+    <!-- ============== お問い合わせ ============== -->
     <section id="contact">
       <div class="container">
         <h2>お問い合わせ・事前登録</h2>
@@ -270,7 +277,7 @@
     </section>
   </main>
 
-  <!-- =================== Footer =================== -->
+  <!-- ============== Footer ============== -->
   <footer>
     <div class="container">
       <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
@@ -280,11 +287,11 @@
           <span>・</span>
           <a href="terms.html">利用規約</a>
           <span>・</span>
-          <a href="https://x.com/intent/follow?screen_name=YOUR_X_ID"waveblasttaiyo="X を開く">X</a>
+          <!-- あなたのXのIDに置き換えてください -->
+          <a href="https://x.com/intent/follow?screen_name=waveblasttaiyo" target="_blank" rel="noopener">X</a>
         </div>
       </div>
     </div>
   </footer>
 </body>
 </html>
-
