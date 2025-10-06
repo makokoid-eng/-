@@ -6,11 +6,10 @@
   <title>食習慣サポートLINE Bot｜写真を送るだけで目安フィードバック</title>
   <meta name="description" content="LINEで食事写真を送ると、AIが内容を要約して野菜・たんぱく質・kcalの“目安”を返信。日々のふり返りや記録づくりをシンプルに。">
 
-  <!-- OGP -->
+  <!-- OGP（公開URLに合わせて絶対パス）-->
   <meta property="og:type" content="website">
   <meta property="og:title" content="食習慣サポートLINE Bot">
   <meta property="og:description" content="写真を送るだけ。AIが要約と栄養の“目安”を返信。日々の食事記録の補助に。">
-  <!-- 可能なら絶対URLにしてください -->
   <meta property="og:image" content="https://makokoid-eng.github.io/assets/images/hero.png">
   <meta property="og:locale" content="ja_JP">
 
@@ -22,11 +21,20 @@
       --shadow:0 3px 18px rgba(0,0,0,.06);
     }
     *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    html,body{margin:0;padding:0;color:var(--ink);
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP","Helvetica Neue",Arial,"メイリオ",sans-serif;line-height:1.75}
     img{max-width:100%;display:block}
     a{color:inherit;text-decoration:none}
     .container{max-width:var(--max);margin:0 auto;padding:0 var(--pad)}
+
+    /* ==== 全面固定背景（サイト全体に適用）==== */
+    .page-bg{
+      position:fixed; inset:0; z-index:-1;
+      background:
+        linear-gradient(180deg, rgba(250,248,244,.92), rgba(250,248,244,.95)),
+        url('assets/images/bg-lantern.jpg') center/cover no-repeat;
+      /* iOS含め各ブラウザで安定する固定方式 */
+    }
 
     header{position:sticky;top:0;z-index:20;background:rgba(250,248,244,.85);
       backdrop-filter:saturate(140%) blur(6px);border-bottom:1px solid var(--line)}
@@ -42,14 +50,8 @@
     .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
     .btn.ghost{background:transparent}
 
-    /* ===== Hero ===== */
-    .hero{
-      padding:72px 0 32px;
-      background:
-        linear-gradient(180deg, rgba(250,248,244,.85), rgba(250,248,244,.9)),
-        url('assets/images/bg-lantern.jpg') center/cover no-repeat;
-      border-bottom:1px solid var(--line);
-    }
+    /* ===== Hero（背景は透明。全面背景が透ける）===== */
+    .hero{padding:72px 0 32px; border-bottom:1px solid var(--line);}
     .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:28px;align-items:center}
     .badge{display:inline-block;font-size:12px;color:var(--muted);border:1px solid var(--line);
       border-radius:999px;padding:6px 10px;background:#fff8}
@@ -85,6 +87,9 @@
   </style>
 </head>
 <body>
+  <!-- 固定背景（全ページに適用）-->
+  <div class="page-bg" aria-hidden="true"></div>
+
   <!-- ============== Header ============== -->
   <header>
     <div class="container nav">
@@ -101,8 +106,9 @@
         <a href="#contact">お問い合わせ</a>
       </nav>
       <div class="actions">
-        <!-- あなたのXのIDに置き換えてください -->
-        <a class="btn ghost" href="https://x.com/intent/follow?screen_name=waveblasttaiyo" target="_blank" rel="noopener">X</a>
+        <!-- Xリンク：プロフィールを確実に開く -->
+        <a class="btn ghost" href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener" aria-label="Xプロフィール">X</a>
+        <!-- LINE 友だち追加 -->
         <a class="btn primary" href="https://lin.ee/227zyjps" target="_blank" rel="noopener" aria-label="LINEで友だち追加">LINEで使う</a>
       </div>
     </div>
@@ -234,47 +240,6 @@
         </div>
       </div>
     </section>
-
-    <!-- ============== お問い合わせ ============== -->
-    <section id="contact">
-      <div class="container">
-        <h2>お問い合わせ・事前登録</h2>
-        <p class="sub">アップデートやトライアルのご案内をお送りします。</p>
-        <div class="two">
-          <form class="card" onsubmit="alert('送信先（Google フォーム等）を設定してください。'); return false;">
-            <label>お名前（必須）<br>
-              <input type="text" name="name" required style="width:100%;padding:10px;margin-top:6px;border:1px solid #ccc;border-radius:8px;">
-            </label><br><br>
-            <label>メール（必須）<br>
-              <input type="email" name="email" required style="width:100%;padding:10px;margin-top:6px;border:1px solid #ccc;border-radius:8px;">
-            </label><br><br>
-            <label>区分<br>
-              <select name="type" style="width:100%;padding:10px;margin-top:6px;border:1px solid #ccc;border-radius:8px;">
-                <option>個人利用</option>
-                <option>医療・栄養の専門職</option>
-                <option>その他（取材・協業 等）</option>
-              </select>
-            </label><br><br>
-            <label>メッセージ（任意）<br>
-              <textarea name="msg" rows="4" style="width:100%;padding:10px;margin-top:6px;border:1px solid #ccc;border-radius:8px;"></textarea>
-            </label><br><br>
-            <button class="btn primary" type="submit">送信</button>
-          </form>
-
-          <div class="card">
-            <h3>ニュースレター</h3>
-            <p>アップデートやクラファン開始をメールでお知らせします。</p>
-            <form onsubmit="alert('送信先（メールリスト）を設定してください。'); return false;">
-              <label>メールアドレス<br>
-                <input type="email" required style="width:100%;padding:10px;margin-top:6px;border:1px solid #ccc;border-radius:8px;">
-              </label><br><br>
-              <button class="btn" type="submit">登録する</button>
-            </form>
-            <p class="note" style="margin-top:10px;">※スパムは送りません。いつでも配信停止できます。</p>
-          </div>
-        </div>
-      </div>
-    </section>
   </main>
 
   <!-- ============== Footer ============== -->
@@ -287,8 +252,7 @@
           <span>・</span>
           <a href="terms.html">利用規約</a>
           <span>・</span>
-          <!-- あなたのXのIDに置き換えてください -->
-          <a href="https://x.com/intent/follow?screen_name=waveblasttaiyo" target="_blank" rel="noopener">X</a>
+          <a href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener">X</a>
         </div>
       </div>
     </div>
