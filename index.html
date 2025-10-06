@@ -6,11 +6,11 @@
   <title>食習慣サポートLINE Bot｜写真を送るだけで目安フィードバック</title>
   <meta name="description" content="LINEで食事写真を送ると、AIが内容を要約して野菜・たんぱく質・kcalの“目安”を返信。日々のふり返りや記録づくりをシンプルに。">
 
-  <!-- OGP（公開URLに合わせて絶対パス）-->
+  <!-- OGP（※公開URLに合わせて必要なら /makokoid-eng を外す） -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="食習慣サポートLINE Bot">
   <meta property="og:description" content="写真を送るだけ。AIが要約と栄養の“目安”を返信。日々の食事記録の補助に。">
-  <meta property="og:image" content="https://makokoid-eng.github.io/assets/images/hero.png">
+  <meta property="og:image" content="https://makokoid-eng.github.io/makokoid-eng/assets/images/hero.png">
   <meta property="og:locale" content="ja_JP">
 
   <style>
@@ -23,16 +23,17 @@
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;color:var(--ink);
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP","Helvetica Neue",Arial,"メイリオ",sans-serif;line-height:1.75}
+
     img{max-width:100%;display:block}
     a{color:inherit;text-decoration:none}
     .container{max-width:var(--max);margin:0 auto;padding:0 var(--pad)}
 
-    /* ==== 全面固定背景（サイト全体に適用）==== */
+    /* === サイト全体に固定背景 === */
     .page-bg{
       position:fixed; inset:0; z-index:-1;
       background:
         linear-gradient(180deg, rgba(250,248,244,.92), rgba(250,248,244,.95)),
-        url('https://makokoid-eng.github.io/assets/images/bg-lantern.jpg') center/cover no-repeat;
+        url('assets/images/bg-lantern.jpg?v=20251006') center/cover no-repeat;
     }
 
     header{position:sticky;top:0;z-index:20;background:rgba(250,248,244,.85);
@@ -49,7 +50,7 @@
     .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
     .btn.ghost{background:transparent}
 
-    /* ===== Hero（背景は透明。全面背景が透ける）===== */
+    /* === Hero（透過。背面の固定背景が見える） === */
     .hero{padding:72px 0 32px; border-bottom:1px solid var(--line);}
     .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:28px;align-items:center}
     .badge{display:inline-block;font-size:12px;color:var(--muted);border:1px solid var(--line);
@@ -86,14 +87,14 @@
   </style>
 </head>
 <body>
-  <!-- 固定背景（全ページに適用）-->
+  <!-- サイト全体に効く固定背景 -->
   <div class="page-bg" aria-hidden="true"></div>
 
-  <!-- ============== Header ============== -->
+  <!-- ===== Header ===== -->
   <header>
     <div class="container nav">
       <div class="logo">
-        <img src="https://makokoid-eng.github.io/assets/images/hero.png" alt="サービスロゴ">
+        <img src="assets/images/hero.png?v=20251006" alt="サービスロゴ">
         <span>食習慣サポートLINE Bot</span>
       </div>
       <nav class="navlinks">
@@ -105,16 +106,15 @@
         <a href="#contact">お問い合わせ</a>
       </nav>
       <div class="actions">
-        <!-- Xリンク：プロフィールを確実に開く -->
-        <a class="btn ghost" href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener" aria-label="Xプロフィール">X</a>
-        <!-- LINE 友だち追加 -->
-        <a class="btn primary" href="https://lin.ee/227zyjps" target="_blank" rel="noopener" aria-label="LINEで友だち追加">LINEで使う</a>
+        <a class="btn ghost" href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener">X</a>
+        <!-- PC/スマホとも開くユニバーサルリンク（@ は %40 でURLエンコード） -->
+        <a class="btn primary" href="https://line.me/R/ti/p/%40227zyjps" target="_blank" rel="noopener" aria-label="LINEで友だち追加">LINEで使う</a>
       </div>
     </div>
   </header>
 
   <main>
-    <!-- ============== Hero ============== -->
+    <!-- ===== Hero ===== -->
     <section class="hero">
       <div class="container hero-grid">
         <div>
@@ -125,7 +125,7 @@
             「OK」で記録、ズレは「修正」で微調整。自分の振り返りや、必要に応じた情報共有の素材づくりに。
           </p>
           <div class="hero-cta">
-            <a class="btn primary" href="https://lin.ee/227zyjps" target="_blank" rel="noopener" aria-label="LINEで友だち追加">LINEで使い始める</a>
+            <a class="btn primary" href="https://line.me/R/ti/p/%40227zyjp" target="_blank" rel="noopener">LINEで使い始める</a>
             <a class="btn" href="#demo">1分デモを見る</a>
           </div>
           <p class="note" style="margin-top:10px;">
@@ -133,13 +133,12 @@
           </p>
         </div>
         <div class="hero-figure">
-          <img src="https://makokoid-eng.github.io/assets/images/hero.png"
-     alt="LINEで写真送信→AIが要約＆栄養の目安を返信するデモ">
+          <img src="assets/images/hero.png?v=20251006" alt="LINEで写真送信→AIが要約＆栄養の目安を返信するデモ">
         </div>
       </div>
     </section>
 
-    <!-- ============== 特徴 ============== -->
+    <!-- ===== 特徴 ===== -->
     <section id="features">
       <div class="container">
         <h2>3つの特徴</h2>
@@ -161,7 +160,7 @@
       </div>
     </section>
 
-    <!-- ============== 使い方 ============== -->
+    <!-- ===== 使い方 ===== -->
     <section id="how">
       <div class="container">
         <h2>使い方</h2>
@@ -175,14 +174,14 @@
       </div>
     </section>
 
-    <!-- ============== デモ / ロードマップ ============== -->
+    <!-- ===== デモ / ロードマップ ===== -->
     <section id="demo">
       <div class="container two">
         <div>
           <h2>1分デモ</h2>
           <p class="sub">実際の操作感を確認できます。</p>
           <div class="card">
-            <img src="https://makokoid-eng.github.io/assets/images/demo-01.png" alt="操作デモ">
+            <img src="assets/images/demo-01.png?v=20251006" alt="操作デモ">
           </div>
           <p class="note">※画面は開発中です。仕様は今後変更される場合があります。</p>
         </div>
@@ -198,7 +197,7 @@
       </div>
     </section>
 
-    <!-- ============== 活用例 ============== -->
+    <!-- ===== 活用例 ===== -->
     <section id="for">
       <div class="container two">
         <div class="card">
@@ -220,7 +219,7 @@
       </div>
     </section>
 
-    <!-- ============== FAQ ============== -->
+    <!-- ===== FAQ ===== -->
     <section id="faq">
       <div class="container">
         <h2>FAQ</h2>
@@ -242,16 +241,14 @@
     </section>
   </main>
 
-  <!-- ============== Footer ============== -->
+  <!-- ===== Footer ===== -->
   <footer>
     <div class="container">
       <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
         <div>© 2025 食習慣サポートLINE Bot</div>
         <div class="social">
-          <a href="privacy.html">プライバシーポリシー</a>
-          <span>・</span>
-          <a href="terms.html">利用規約</a>
-          <span>・</span>
+          <a href="privacy.html">プライバシーポリシー</a><span>・</span>
+          <a href="terms.html">利用規約</a><span>・</span>
           <a href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener">X</a>
         </div>
       </div>
