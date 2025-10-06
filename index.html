@@ -6,12 +6,13 @@
   <title>食習慣サポートLINE Bot｜写真を送るだけで目安フィードバック</title>
   <meta name="description" content="LINEで食事写真を送ると、AIが内容を要約して野菜・たんぱく質・kcalの“目安”を返信。日々のふり返りや記録づくりをシンプルに。">
 
-  <!-- OGP -->
+  <!-- OGP（ユーザーサイトはドメイン直下なので /assets/... をフルURLで） -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="食習慣サポートLINE Bot">
   <meta property="og:description" content="写真を送るだけ。AIが要約と栄養の“目安”を返信。日々の食事記録の補助に。">
   <meta property="og:image" content="https://makokoid-eng.github.io/assets/images/hero.png">
   <meta property="og:locale" content="ja_JP">
+
   <style>
     :root{
       --ink:#141414; --muted:#555; --line:#e9e4db;
@@ -20,9 +21,12 @@
       --shadow:0 3px 18px rgba(0,0,0,.06);
     }
     *{box-sizing:border-box}
-    html,body{margin:0;padding:0;color:var(--ink);
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP","Helvetica Neue",Arial,"メイリオ",sans-serif;line-height:1.75}
-
+    html,body{
+      margin:0;padding:0;color:var(--ink);line-height:1.75;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Hiragino Sans","Noto Sans JP","Helvetica Neue",Arial,"メイリオ",sans-serif;
+      /* 背景は透過にして、下の .page-bg を全ページに表示 */
+      background:transparent;
+    }
     img{max-width:100%;display:block}
     a{color:inherit;text-decoration:none}
     .container{max-width:var(--max);margin:0 auto;padding:0 var(--pad)}
@@ -32,7 +36,7 @@
       position:fixed; inset:0; z-index:-1;
       background:
         linear-gradient(180deg, rgba(250,248,244,.92), rgba(250,248,244,.95)),
-        url('/assets/images/bg-lantern.jpg?v=20251006') center/cover no-repeat;
+        url('/assets/images/bg-lantern.jpg?v=1') center/cover no-repeat;
     }
 
     header{position:sticky;top:0;z-index:20;background:rgba(250,248,244,.85);
@@ -49,7 +53,7 @@
     .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
     .btn.ghost{background:transparent}
 
-    /* === Hero（透過。背面の固定背景が見える） === */
+    /* Hero（背面の固定背景が見える） */
     .hero{padding:72px 0 32px; border-bottom:1px solid var(--line);}
     .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:28px;align-items:center}
     .badge{display:inline-block;font-size:12px;color:var(--muted);border:1px solid var(--line);
@@ -86,14 +90,15 @@
   </style>
 </head>
 <body>
-  <!-- サイト全体に効く固定背景 -->
+  <!-- 背景（全ページ） -->
   <div class="page-bg" aria-hidden="true"></div>
 
   <!-- ===== Header ===== -->
   <header>
     <div class="container nav">
       <div class="logo">
-        <img src="/assets/images/hero.png?v=20251006" alt="サービスロゴ">
+        <img src="/assets/images/hero.png?v=1" alt="サービスロゴ">
+        <span>食習慣サポートLINE Bot</span>
       </div>
       <nav class="navlinks">
         <a href="#features">特徴</a>
@@ -105,10 +110,8 @@
       </nav>
       <div class="actions">
         <a class="btn ghost" href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener">X</a>
-        <!-- PC/スマホとも開くユニバーサルリンク（@ は %40 にエンコード） -->
-      <a class="btn primary"
-   href="https://line.me/R/ti/p/%40227zyjps"
-        </div>
+        <a class="btn primary" href="https://line.me/R/ti/p/%40227zyjps" target="_blank" rel="noopener" aria-label="LINEで友だち追加">LINEで使う</a>
+      </div>
     </div>
   </header>
 
@@ -132,8 +135,7 @@
           </p>
         </div>
         <div class="hero-figure">
-        <img src="/assets/images/hero.png?v=20251006"
-     alt="LINEで写真送信→AIが要約＆栄養の目安を返信するデモ">
+          <img src="/assets/images/hero.png?v=1" alt="LINEで写真送信→AIが要約＆栄養の目安を返信するデモ">
         </div>
       </div>
     </section>
@@ -174,14 +176,14 @@
       </div>
     </section>
 
-    <!-- ===== デモ / ロードマップ ===== -->
+    <!-- ===== デモ ===== -->
     <section id="demo">
       <div class="container two">
         <div>
           <h2>1分デモ</h2>
           <p class="sub">実際の操作感を確認できます。</p>
           <div class="card">
-            <img src="/assets/images/demo-01.png?v=20251006" alt="操作デモ">
+            <img src="/assets/images/demo-01.png?v=1" alt="操作デモ">
           </div>
           <p class="note">※画面は開発中です。仕様は今後変更される場合があります。</p>
         </div>
