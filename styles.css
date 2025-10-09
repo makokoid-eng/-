@@ -99,3 +99,12 @@ a{ color:#0ea5e9; }
 /* ===== Scroll-in animation（やさしい登場） ===== */
 .reveal{ opacity:0; transform: translateY(12px); transition: all .6s ease; }
 .reveal.visible{ opacity:1; transform: translateY(0); }
+/* ===== Mail form ===== */
+.form{ display:grid; gap:14px; }
+.form .row{ display:grid; gap:6px; }
+.form label{ font-weight:600; color:#374151; }
+.form input,.form textarea{
+  width:100%; padding:10px 12px; border:1px solid #e5e7eb; border-radius:10px; background:#fff; font:inherit;
+}
+.form input:focus,.form textarea:focus{ outline:2px solid #a7f3d0; border-color:#10b981; }
+.form .consent{ display:flex; gap:8px; align-items:flex-start; font-size:.95rem; color:#374151; }
