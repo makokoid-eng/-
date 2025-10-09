@@ -3,12 +3,12 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'cloud/functions/line-webhook/**'
+      - 'cloud/functions/**'
       - '.github/workflows/line-webhook-deploy.yml'
   pull_request:
     branches: [ main ]
     paths:
-      - 'cloud/functions/line-webhook/**'
+      - 'cloud/functions/**'
       - '.github/workflows/line-webhook-deploy.yml'
   workflow_dispatch:
 
@@ -36,7 +36,7 @@ jobs:
       - uses: google-github-actions/setup-gcloud@v2
 
       - name: Deploy Cloud Functions v2 (line-webhook)
-        working-directory: ./cloud/functions/line-webhook
+        working-directory: cloud/functions/line-webhook
         run: |
           gcloud functions deploy line-webhook \
             --gen2 \
