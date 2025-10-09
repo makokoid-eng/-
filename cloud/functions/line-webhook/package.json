@@ -1,0 +1,13 @@
+{
+  "name": "line-meal-logger",
+  "version": "1.0.0",
+  "description": "LINE webhook for meal logging with quick-reply correction flow",
+  "main": "index.js",
+  "type": "commonjs",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "googleapis": "^131.0.0",
+    "node-fetch": "^3.3.2",
+    "openai": "^4.55.0"
+  }
+}
