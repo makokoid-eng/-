@@ -8,42 +8,49 @@
   <title>食習慣サポートLINE Bot｜写真を送るだけで目安フィードバック</title>
   <meta name="description" content="LINEで食事写真を送ると、AIが要約して野菜・たんぱく質・kcalの“目安”を返信。毎日のふり返りをシンプルに。">
 
-  <!-- OGP（ogp.jpg を後で追加すれば自動でSNSカードに反映） -->
+  <!-- OGP設定 -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="食習慣サポートLINE Bot">
   <meta property="og:description" content="写真を送るだけ。AIが要約＆栄養の目安を返信。">
   <meta property="og:url" content="https://makokoid-eng.github.io/akarilab/">
-  <meta property="og:image" content="https://makokoid-eng.github.io/akarilab/assets/ogp.jpg">
+  <meta property="og:image" content="https://makokoid-eng.github.io/akarilab/assets/hero.jpg">
   <meta name="twitter:card" content="summary_large_image">
 
   <link rel="icon" href="assets/favicon.ico">
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+
   <style>
-    /* 最小限のレイアウト補助（既存styles.cssと両立） */
-    header{ position:sticky; top:0; background:#fff; border-bottom:1px solid #f3f4f6; z-index:10; }
-    .nav{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 0; }
-    .logo{ display:flex; align-items:center; gap:10px; font-weight:700; }
-    .logo img{ width:32px; height:32px; border-radius:6px; object-fit:cover; }
-    .navlinks a{ margin:0 8px; text-decoration:none; }
-    .actions{ display:flex; gap:8px; }
-    .btn.primary{ background:#16a34a; color:#fff; }
-    .btn.ghost{ border:1px solid #e5e7eb; }
-    .hero-grid{ display:grid; grid-template-columns:1.2fr 1fr; gap:24px; align-items:center; }
-    @media (max-width:780px){ .hero-grid{ grid-template-columns:1fr; } }
-    .bg-soft{ background:#fff6d6; background-image:url('assets/bg-lantern.jpg'); background-size:cover; background-position:center; }
-    .grid-auto{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+    body { font-family: 'Noto Sans JP', sans-serif; margin:0; color:#111; background:#fff; }
+    header { position:sticky; top:0; background:#fff; border-bottom:1px solid #eee; z-index:10; }
+    .container { max-width:1000px; margin:0 auto; padding:0 20px; }
+    .nav { display:flex; align-items:center; justify-content:space-between; padding:10px 0; }
+    .logo { display:flex; align-items:center; gap:8px; font-weight:700; }
+    .logo img { width:32px; height:32px; border-radius:6px; object-fit:cover; }
+    .navlinks a { margin:0 10px; text-decoration:none; color:#333; }
+    .actions { display:flex; gap:10px; }
+    .btn { padding:8px 14px; border-radius:6px; font-weight:600; text-decoration:none; }
+    .btn.primary { background:#16a34a; color:#fff; }
+    .btn.ghost { border:1px solid #ddd; color:#333; }
+    h1,h2,h3 { line-height:1.4; }
+    section { padding:60px 0; }
+    .hero-grid { display:grid; grid-template-columns:1.2fr 1fr; gap:24px; align-items:center; }
+    @media (max-width:780px){ .hero-grid{ grid-template-columns:1fr; text-align:center; } }
+    .media { width:100%; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.05); }
+    .bg-soft { background:#fff6d6; background-image:url('assets/bg-lantern.jpg'); background-size:cover; background-position:center; }
+    .grid-auto { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:20px; }
+    footer { background:#fafafa; padding:20px 0; border-top:1px solid #eee; font-size:14px; color:#555; }
   </style>
 </head>
-<body>
 
-  <!-- Header -->
+<body>
+  <!-- ===== Header ===== -->
   <header>
     <div class="container nav">
       <div class="logo">
-        <img src="assets/hero.png" alt="サービスロゴ">
+        <img src="assets/hero.jpg" alt="サービスロゴ">
         <span>食習慣サポートLINE Bot</span>
       </div>
       <nav class="navlinks">
@@ -58,23 +65,24 @@
     </div>
   </header>
 
+  <!-- ===== Main ===== -->
   <main>
     <!-- Hero -->
-    <section class="container hero-grid" style="padding-top:28px;">
+    <section class="container hero-grid" style="padding-top:40px;">
       <div>
-        <h1 class="hero-h1">“食べた”を気軽に見える化。<br>LINEで、毎日のふり返りを。</h1>
-        <p class="lead">写真を送るだけ。AIが<strong>野菜・たんぱく質・kcal</strong>の<strong>目安</strong>と要約を返信。</p>
+        <h1>“食べた”を気軽に見える化。<br>LINEで、毎日のふり返りを。</h1>
+        <p>写真を送るだけ。AIが<strong>野菜・たんぱく質・kcal</strong>の<strong>目安</strong>を返信。</p>
         <div style="display:flex;gap:12px;flex-wrap:wrap;">
           <a class="btn primary" href="https://line.me/R/ti/p/@227zyjps" target="_blank" rel="noopener">LINEで使い始める</a>
-          <a class="btn" href="#demo">1分デモを見る</a>
+          <a class="btn ghost" href="#demo">1分デモを見る</a>
         </div>
-        <small class="notice">※数値は目安です。医療・栄養指導の代替ではありません。</small>
+        <small>※数値は目安です。医療・栄養指導の代替ではありません。</small>
       </div>
-      <div><img src="assets/hero.png" alt="料理写真" class="media"></div>
+      <div><img src="assets/hero.jpg" alt="料理写真" class="media"></div>
     </section>
 
     <!-- 特徴 -->
-    <section id="features" class="section bg-soft">
+    <section id="features" class="bg-soft">
       <div class="container">
         <h2>3つの特徴</h2>
         <div class="grid-auto">
@@ -86,7 +94,7 @@
     </section>
 
     <!-- 使い方 -->
-    <section id="how" class="section">
+    <section id="how">
       <div class="container">
         <h2>使い方</h2>
         <div class="grid-auto">
@@ -99,33 +107,24 @@
     </section>
 
     <!-- デモ -->
-    <section id="demo" class="section">
+    <section id="demo">
       <div class="container">
         <h2>1分デモ</h2>
-        <p class="lead">写真を送信 → AIが要約 → 目安を返信 → ワンタップで記録。</p>
-
-        <!-- LINEスクショ（あれば表示） -->
-        <div class="grid-auto" style="margin-top:12px;">
-          <a href="assets/demo-chat-01.jpg" target="_blank" rel="noopener">
-            <img class="media" src="assets/demo-chat-01.jpg" alt="送信→解析中の画面" loading="lazy">
-          </a>
-          <a href="assets/demo-chat-02.jpg" target="_blank" rel="noopener">
-            <img class="media" src="assets/demo-chat-02.jpg" alt="栄養目安の返答→登録確認" loading="lazy">
-          </a>
+        <p>写真を送信 → AIが要約 → 目安を返信 → ワンタップで記録。</p>
+        <div class="grid-auto" style="margin-top:20px;">
+          <a href="assets/demo-chat-01.jpg" target="_blank"><img src="assets/demo-chat-01.jpg" alt="送信→解析中" class="media"></a>
+          <a href="assets/demo-chat-02.jpg" target="_blank"><img src="assets/demo-chat-02.jpg" alt="栄養目安返信" class="media"></a>
         </div>
-
-        <!-- 静止画デモ（なければ自動で404になるだけ。用意済みなら表示） -->
         <div class="card" style="margin-top:16px;">
-          <img class="media" src="assets/demo-01.png" alt="操作イメージ" loading="lazy">
+          <img src="assets/demo-01.jpg" alt="操作イメージ" class="media">
         </div>
-
-        <small class="notice">※画面は開発中です。仕様は今後変更される場合があります。</small>
+        <small>※画面は開発中です。仕様は今後変更される場合があります。</small>
       </div>
     </section>
   </main>
 
-  <!-- Footer -->
-  <footer class="footer">
+  <!-- ===== Footer ===== -->
+  <footer>
     <div class="container" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
       <div>© 2025 AkarI Lab</div>
       <div class="social">
@@ -135,6 +134,5 @@
       </div>
     </div>
   </footer>
-
 </body>
 </html>
