@@ -1,0 +1,16 @@
+{
+  "name": "line-webhook",
+  "version": "1.0.0",
+  "description": "LINE webhook handler deployed to Google Cloud Functions v2",
+  "main": "index.js",
+  "scripts": {
+    "start": "functions-framework --target=lineWebhook"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.4.0",
+    "@line/bot-sdk": "^7.6.0"
+  }
+}
