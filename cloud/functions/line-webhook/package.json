@@ -1,0 +1,11 @@
+{
+  "name": "line-webhook",
+  "version": "1.0.0",
+  "description": "LINE webhook (CF v2) with Google Sheets logging",
+  "main": "index.js",
+  "type": "commonjs",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "googleapis": "^131.0.0"
+  }
+}
