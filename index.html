@@ -74,6 +74,15 @@
 
     footer{background:#fafafa; border-top:1px solid var(--border); padding:22px 0; color:#555; font-size:.92rem}
     .footer-line{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+    /* ===== Mail form ===== */
+.form{ display:grid; gap:14px; }
+.form .row{ display:grid; gap:6px; }
+.form label{ font-weight:600; color:#374151; }
+.form input,.form textarea{
+  width:100%; padding:10px 12px; border:1px solid #e5e7eb; border-radius:10px; background:#fff; font:inherit;
+}
+.form input:focus,.form textarea:focus{ outline:2px solid #a7f3d0; border-color:#10b981; }
+.form .consent{ display:flex; gap:8px; align-items:flex-start; font-size:.95rem; color:#374151; }
   </style>
 </head>
 <body>
@@ -91,6 +100,7 @@
         <a href="#project">プロジェクト</a>
         <a href="#demo">デモ</a>
         <a href="#cf">準備中</a>
+         <a href="#contact">お問い合わせ</a>
       </nav>
       <div>
         <a class="btn ghost" href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener">X</a>
