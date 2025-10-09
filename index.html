@@ -376,5 +376,34 @@
     els.forEach(el => io.observe(el));
   })();
 </script>
+  <script>
+(() => {
+  const form = document.getElementById('contactForm');
+  const status = document.getElementById('formStatus');
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (form.querySelector('input[name="_gotcha"]').value) return; // bot除け
+
+    status.textContent = '送信中…';
+    try {
+      const res = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { 'Accept': 'application/json' }
+      });
+      if (res.ok) {
+        status.textContent = '送信ありがとうございました。折り返しご連絡します。';
+        form.reset();
+      } else {
+        status.textContent = '送信に失敗しました。時間をおいて再度お試しください。';
+      }
+    } catch {
+      status.textContent = 'ネットワークエラーです。再度お試しください。';
+    }
+  });
+})();
+</script>
 </body>
 </html>
