@@ -15,13 +15,21 @@ AkarI Lab は、AIを人の暮らしに温かく溶け込ませる開発プロ�
 ---
 
 ## 🧭 更新方法
-GitHub Pages を使用。  
+GitHub Pages を使用。
 `main` ブランチに push するだけで自動的に公開されます。
 
 ```bash
 git add .
 git commit -m "update"
 git push
+
+```
+
+## ☁️ Cloud Functions v2 デプロイ時の注意
+- Cloud Functions のソースディレクトリ直下（`cloud/functions/line-webhook/`）に `package.json` を置き、`googleapis` を依存として追加してください。これによりビルド時に自動でインストールされ、`MODULE_NOT_FOUND: 'googleapis'` を防げます。
+- `.gcloudignore` で `node_modules/` を除外し、デプロイ対象を最小限に保ちます（Cloud Functions v2 がデプロイ時に `npm install` を実行します）。
+- GitHub Actions のデプロイジョブは `working-directory: cloud/functions/line-webhook` を指定した上で `gcloud functions deploy` を実行してください。
+- 実行サービスアカウント（`GCP_RUNTIME_SA`）を Google スプレッドシート（`SHEET_ID`）の編集権限で共有してください。ログ追記時に必要です。
 
 ## 検索・SNS対策（任意）
 
