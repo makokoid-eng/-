@@ -1,0 +1,44 @@
+name: Deploy LINE webhook to Cloud Functions
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'cloud/functions/line-webhook/**'
+      - '.github/workflows/line-webhook-deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+      REGION: ${{ secrets.GCP_REGION }}
+      SA_EMAIL: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      PROVIDER: ${{ secrets.GCP_WIF_PROVIDER }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.PROVIDER }}
+          service_account: ${{ env.SA_EMAIL }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy Cloud Functions v2 (line-webhook)
+        working-directory: cloud/functions/line-webhook
+        run: |
+          gcloud functions deploy line-webhook \
+            --gen2 \
+            --runtime=nodejs20 \
+            --region="$REGION" \
+            --project="$PROJECT_ID" \
+            --entry-point=app \
+            --trigger-http \
+            --allow-unauthenticated \
+            --set-env-vars LINE_CHANNEL_SECRET=${{ secrets.LINE_CHANNEL_SECRET }},LINE_CHANNEL_ACCESS_TOKEN=${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }},SHEET_ID=${{ secrets.SHEET_ID }}
