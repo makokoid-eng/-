@@ -27,6 +27,7 @@ git push
 
 - `og:title` / `og:description` / `og:image` を適切に設定（済）
 - `robots.txt`/`sitemap.xml` は任意。必要に応じて追加
+- OGPを差し替えたら `?v=` のバージョン番号を更新し、Xカードバリデータで確認すること
 
 ---
 
