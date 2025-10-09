@@ -315,6 +315,47 @@
     </div>
   </div>
 </section>
+<!-- ===== Contact / お問い合わせ ===== -->
+<section id="contact" class="section">
+  <div class="container">
+    <h2>お問い合わせ</h2>
+    <p class="lead">協力・連携・取材・投資のご相談など、お気軽にご連絡ください。</p>
+
+    <form id="contactForm" class="card form" action="https://formspree.io/f/xgvnljbv" method="POST">
+      <div class="row">
+        <label for="name">お名前</label>
+        <input id="name" name="name" type="text" required>
+      </div>
+
+      <div class="row">
+        <label for="email">メールアドレス</label>
+        <input id="email" name="_replyto" type="email" required>
+      </div>
+
+      <div class="row">
+        <label for="org">ご所属（任意）</label>
+        <input id="org" name="organization" type="text">
+      </div>
+
+      <div class="row">
+        <label for="message">お問い合わせ内容</label>
+        <textarea id="message" name="message" rows="5" required></textarea>
+      </div>
+
+      <!-- スパム対策（ハニーポット） -->
+      <input type="text" name="_gotcha" style="display:none">
+
+      <label class="consent">
+        <input type="checkbox" required>
+        <span><a href="/akarilab/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>に同意します</span>
+      </label>
+
+      <div id="formStatus" class="note" aria-live="polite" style="min-height:1.2em;"></div>
+      <button class="btn primary" type="submit">送信する</button>
+    </form>
+  </div>
+</section>
+    
   </footer>
 <script>
   // IntersectionObserver で .reveal に visible を付与
