@@ -47,4 +47,55 @@ a{ color:#0ea5e9; }
 .fab-line{ background:#16a34a; color:#fff; }
 .fab-x{ background:#111827; color:#fff; }
 .fab:hover{ transform:translateY(-1px); transition:transform .15s ease; }
+/* ===== Investor / Partners ===== */
+.section-invest{
+  background: rgba(255,246,214,0.75);
+  /* ぼかし背景（黄土ランタンの“やさしい光”） */
+  background-image: url('assets/bg-lantern.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  position: relative;
+}
+.section-invest::before{
+  content:"";
+  position:absolute; inset:0;
+  background: rgba(255,246,214,0.75); /* ほんのり被せて文字の可読性UP */
+  backdrop-filter: blur(1.5px);
+}
+.section-invest > .container{ position:relative; }
 
+.invest-head h2{ margin-bottom:6px; }
+.invest-head .lead{ color:#374151; }
+
+.grid-2{
+  display:grid; gap:18px;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+}
+@media (max-width: 900px){
+  .grid-2{ grid-template-columns: 1fr; }
+}
+
+.card{
+  background:#fff; border:1px solid #e5e7eb;
+  border-radius:14px; padding:16px 18px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+.card.highlight{
+  border-color:#16a34a33; box-shadow: 0 8px 22px rgba(22,163,74,0.12);
+}
+
+.bullets{ margin:8px 0 0 0; padding-left:18px; }
+.bullets li{ margin:6px 0; line-height:1.6; }
+
+.tags{ margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
+.tag{
+  font-size:12px; padding:4px 8px; border-radius:999px;
+  background:#f3f4f6; border:1px solid #e5e7eb; color:#374151;
+}
+
+.cta-row{ display:flex; gap:10px; flex-wrap:wrap; }
+
+/* ===== Scroll-in animation（やさしい登場） ===== */
+.reveal{ opacity:0; transform: translateY(12px); transition: all .6s ease; }
+.reveal.visible{ opacity:1; transform: translateY(0); }
