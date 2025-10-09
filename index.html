@@ -1,186 +1,215 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <base href="/akarilab/">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
 
-  <title>AkarI Lab｜AIの光で、人の人生にあかりを灯す。</title>
-  <meta name="description" content="AkarI Lab は、AIを人の暮らしに温かく溶け込ませる開発プロジェクト。現在、食習慣サポートLINE Botなどを中心に、クラウドファンディング準備中。">
+  <title>AkarI Lab｜AIの光で、人の人生に“あかり”を灯す</title>
+  <meta name="description" content="AkarI Lab は、AIを人の暮らしに温かく溶け込ませる開発プロジェクト。第一弾の食習慣サポートLINE Botは写真を送るだけで要約と〈野菜・たんぱく質・kcal〉の目安を返信。クラウドファンディング準備中。">
 
-  <!-- OGP -->
+  <!-- OGP（あとで /akarilab/assets/ogp.jpg を置けばSNSカードOK） -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="AkarI Lab｜AIの光で、人の人生にあかりを灯す。">
-  <meta property="og:description" content="AI×食×暮らしをテーマに、人の温度を感じるAIサービスを開発中。">
+  <meta property="og:title" content="AkarI Lab｜食習慣サポートLINE Bot">
+  <meta property="og:description" content="写真を送るだけ。AIが要約と栄養の目安を返信。クラファン準備中。">
   <meta property="og:url" content="https://makokoid-eng.github.io/akarilab/">
   <meta property="og:image" content="https://makokoid-eng.github.io/akarilab/assets/ogp.jpg">
   <meta name="twitter:card" content="summary_large_image">
 
-  <link rel="icon" href="assets/favicon.ico">
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" href="/akarilab/assets/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
 
- <style>
-  :root{
-    --ink:#222; --sub:#667085; --border:#ececec; --brand:#16a34a;
-    --paper:#fffaf0;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0; color:var(--ink); font-family:'Noto Sans JP',system-ui,sans-serif; line-height:1.7;
-    background:var(--paper);
-    position:relative;
-  }
-  /* 絵ランタン背景（控えめタイル＋黄みベール） */
-  body::before{
-    content:"";
-    position:fixed; inset:0; z-index:-1; pointer-events:none;
-    background:
-      linear-gradient(0deg, rgba(255,245,200,.78), rgba(255,245,200,.78)),
-      url('/akarilab/assets/bg-lantern-illust.png') center/360px auto repeat,
-      url('/akarilab/assets/bg-lantern.jpg') center/cover no-repeat;
-    opacity:.36;   /* 濃い→数値↑/薄い→数値↓（0.30〜0.45で調整） */
-  }
+  <style>
+    :root{
+      --ink:#222; --sub:#667085; --border:#ececec; --brand:#16a34a; --paper:#fffaf0;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--ink); font-family:'Noto Sans JP',system-ui,sans-serif; line-height:1.7;
+      background:var(--paper); position:relative;
+    }
+    /* ふんわり黄背景 + 絵ランタン（あれば）を控えめタイルで */
+    body::before{
+      content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+      background:
+        linear-gradient(0deg, rgba(255,245,200,.80), rgba(255,245,200,.80)),
+        url('/akarilab/assets/bg-lantern-illust.png') center/360px auto repeat,
+        url('/akarilab/assets/bg-lantern.jpg') center/cover no-repeat;
+      opacity:.38;
+    }
 
-  .container{max-width:1000px; margin:0 auto; padding:0 20px}
-  header{position:sticky; top:0; z-index:10; background:rgba(255,255,255,.92); backdrop-filter:blur(6px); border-bottom:1px solid var(--border)}
-  .nav{display:flex; align-items:center; justify-content:space-between; padding:12px 0}
-  .logo{display:flex; align-items:center; gap:10px; font-weight:700}
-  .logo img{width:36px; height:36px; object-fit:contain}
-  .navlinks a{color:var(--ink); text-decoration:none; margin:0 10px; font-weight:600}
-  .btn{display:inline-block; padding:9px 14px; border-radius:8px; text-decoration:none; font-weight:700}
-  .btn.primary{background:#16a34a; color:#fff}
-  .btn.ghost{border:1px solid var(--border); color:var(--ink); background:#fff}
-  section{padding:64px 0}
+    /* layout */
+    .container{max-width:1000px; margin:0 auto; padding:0 20px}
+    header{position:sticky; top:0; z-index:20; background:rgba(255,255,255,.92); backdrop-filter:blur(6px); border-bottom:1px solid var(--border)}
+    .nav{display:flex; align-items:center; justify-content:space-between; padding:12px 0}
+    .logo{display:flex; align-items:center; gap:10px; font-weight:700}
+    .logo img{width:36px; height:36px; object-fit:contain}
+    .navlinks a{color:var(--ink); text-decoration:none; margin:0 10px; font-weight:600}
+    .btn{display:inline-block; padding:10px 15px; border-radius:10px; text-decoration:none; font-weight:700; line-height:1}
+    .btn.primary{background:var(--brand); color:#fff}
+    .btn.ghost{border:1px solid var(--border); color:var(--ink); background:#fff}
+    section{padding:clamp(40px,5vw,64px) 0; scroll-margin-top:80px}
 
-  .hero{display:grid; grid-template-columns:1.15fr 0.85fr; gap:26px; align-items:center}
-  @media (max-width:800px){ .hero{grid-template-columns:1fr; text-align:center} }
+    /* hero */
+    .hero{display:grid; grid-template-columns:1.15fr 0.85fr; gap:26px; align-items:center}
+    @media (max-width:1024px){ .hero{grid-template-columns:1fr; text-align:center} }
+    h1{font-size:clamp(1.8rem, 2.2vw + 1.1rem, 2.6rem); line-height:1.35; margin:0 0 8px}
+    h2{font-size:clamp(1.4rem, 1.2vw + .9rem, 1.9rem); margin:0 0 12px}
+    p.lead{font-size:1.05rem; color:#333}
+    small.note{color:var(--sub)}
 
-  /* 画像が巨大化しないための共通ガード */
-  .shot{width:100%; max-width:460px; border-radius:12px; display:block; margin:0 auto; box-shadow:0 6px 14px rgba(0,0,0,.08)}
-  .grid{display:grid; grid-template-columns:repeat(2, minmax(260px,1fr)); gap:22px}
-  @media (max-width:880px){ .grid{grid-template-columns:1fr} }
+    /* images */
+    img{max-width:100%; height:auto}
+    .shot{width:100%; max-width:420px; border-radius:12px; display:block; margin:0 auto; box-shadow:0 6px 14px rgba(0,0,0,.08)}
+    .grid{display:grid; grid-template-columns:repeat(2, minmax(260px,1fr)); gap:22px}
+    @media (max-width:880px){ .grid{grid-template-columns:1fr} }
 
-  h1{font-size:clamp(1.8rem, 2.8vw + 1rem, 2.6rem); line-height:1.35; margin:0 0 8px}
-  h2{font-size:clamp(1.4rem, 1.6vw + .8rem, 1.9rem); margin:0 0 12px}
-  p.lead{font-size:1.05rem; color:#333}
-  small.note{color:var(--sub)}
+    .card{background:#fff; border:1px solid var(--border); border-radius:14px; padding:18px}
+    ul.clean{margin:8px 0 0 1em; padding:0}
+    ul.clean li{margin:.25em 0}
 
-  footer{background:#fafafa; border-top:1px solid var(--border); padding:22px 0; color:#555; font-size:.92rem}
-/* ---- バランス調整（画像の拡大しすぎ防止・余白調整） ---- */
-
-/* 画像は常に画面幅を超えない */
-img { max-width: 100%; height: auto; }
-
-/* ヒーローの右側サンプル画像（あれば）を小さめに固定 */
-.hero .shot { max-width: 420px; border-radius: 12px; box-shadow: 0 6px 14px rgba(0,0,0,.08); }
-
-/* 横長の“バナー風”画像を置く場合の安全枠（高さで切れない） */
-.img-banner { width: 100%; max-height: 260px; object-fit: cover; border-radius: 12px; }
-
-/* セクション余白をややタイトにして折返し時の“間延び”を防ぐ */
-section { padding: clamp(40px, 5vw, 64px) 0; }
-
-/* スクロールで見出しがヘッダに隠れない（sticky対策） */
-section { scroll-margin-top: 72px; }
-
-/* レイアウトの崩れを防ぐ（PC幅では2カラム、狭い画面では1カラム） */
-.hero {
-  display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
-  gap: 26px;
-  align-items: center;
-}
-@media (max-width: 1024px) {
-  .hero { grid-template-columns: 1fr; text-align: center; }
-}
-
-/* デモのチャット画像＝ほどよい幅で左右2枚（スマホは1枚ずつ） */
-.grid { display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 22px; }
-@media (max-width: 880px) { .grid { grid-template-columns: 1fr; } }
-
-/* 文字行の読みやすさを維持（行間・字幅で圧迫感を軽減） */
-h1 { line-height: 1.35; margin-bottom: 8px; }
-p.lead { font-size: 1.05rem; }
- 
- </style>
+    footer{background:#fafafa; border-top:1px solid var(--border); padding:22px 0; color:#555; font-size:.92rem}
+    .footer-line{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  </style>
 </head>
-
 <body>
+
   <!-- ===== Header ===== -->
   <header>
-    <div class="nav">
+    <div class="container nav">
       <div class="logo">
-       <img src="/akarilab/assets/lantern.png" width="36" height="36" alt="AkarI Lab（ランタンアイコン）">
+        <!-- ヘッダは“リアル”ランタン -->
+        <img src="/akarilab/assets/lantern.png" alt="AkarI Lab（ランタンアイコン）">
         <span>AkarI Lab</span>
       </div>
       <nav class="navlinks">
         <a href="#about">概要</a>
         <a href="#project">プロジェクト</a>
         <a href="#demo">デモ</a>
+        <a href="#cf">準備中</a>
       </nav>
-      <div class="actions">
+      <div>
         <a class="btn ghost" href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener">X</a>
+        <a class="btn primary" href="https://line.me/R/ti/p/@227zyjps" target="_blank" rel="noopener">LINEで試す（β）</a>
       </div>
     </div>
   </header>
 
   <!-- ===== Hero ===== -->
-  <section class="container hero-grid" id="about">
+  <section id="about" class="container hero">
     <div>
-      <h1 style="font-size:2.2em;line-height:1.4;margin-bottom:12px;">AIの光で、<br>人の人生に“あかり”を灯す。</h1>
-      <p style="font-size:1.1em;">AkarI Labは、AIを人の暮らしに温かく溶け込ませることを目的とした開発プロジェクトです。  
-      現在は「食習慣サポートLINE Bot」を中心に、日々の健康や記録づくりを支えるAIサービスを構築中です。</p>
-      <div style="margin-top:20px;">
-        <a class="btn primary" href="https://line.me/R/ti/p/@227zyjps" target="_blank" rel="noopener">LINEで試してみる</a>
-        <a class="btn ghost" href="#project">開発の想い</a>
+      <span class="btn ghost" style="padding:6px 12px; border-radius:999px; font-size:.78rem;">クラウドファンディング準備中</span>
+      <h1>AIの光で、<br>人の人生に“あかり”を灯す。</h1>
+      <p class="lead">
+        AkarI Lab は、AIを人の暮らしに温かく溶け込ませることを目指す開発プロジェクト。<br>
+        第一弾の<strong>食習慣サポートLINE Bot</strong>は、写真を送るだけで
+        <strong>野菜・たんぱく質・kcal</strong>の<strong>目安</strong>と要約を返信します。
+      </p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:12px">
+        <a class="btn primary" href="https://line.me/R/ti/p/@227zyjps" target="_blank" rel="noopener">LINEで試す（β）</a>
+        <a class="btn ghost" href="#project">開発の狙いを見る</a>
       </div>
-      <p style="font-size:0.9em;margin-top:10px;color:#666;">※現在クラウドファンディング準備中です。</p>
+      <small class="note">※数値は目安です。医療・栄養指導の代替ではありません。</small>
     </div>
     <div>
-      <img src="/akarilab/assets/hero.jpg" alt="食事AIボット デモ" class="media">
+      <!-- ヒーロー側は小さめの見本だけを置く（巨大化を防止） -->
+      <img class="shot" src="/akarilab/assets/demo-chat-01.jpg" alt="写真送信→解析中のイメージ">
     </div>
   </section>
 
-  <!-- ===== Project ===== -->
+  <!-- ===== Project / 狙い ===== -->
   <section id="project">
     <div class="container">
       <h2>開発中のプロジェクト</h2>
-      <p>LINEで食事写真を送ると、AIが要約して野菜・たんぱく質・kcalの目安を返信。  
-      「自分の食事傾向を知ること」から、健康への第一歩を支えます。</p>
-      <div class="grid-auto" style="margin-top:20px;">
+      <p class="lead">LINEで食事写真を送ると、AIが要約して〈野菜・たんぱく質・kcal〉の目安を返信。<br>「自分の食事傾向を知ること」から、健康への第一歩を支えます。</p>
+
+      <div class="grid" style="margin-top:16px;">
         <div class="card">
-          <img src="/akarilab/assets/demo-chat-01.jpg" alt="解析中の画面" class="media">
+          <h3 style="margin-top:0;">① 記録を“軽く”する</h3>
+          <p>撮って送るだけ。OK/修正の最小限タップで記録が整います。</p>
         </div>
         <div class="card">
-          <img src="/akarilab/assets/demo-chat-02.jpg" alt="返信結果の画面" class="media">
+          <h3 style="margin-top:0;">② 共有しやすい設計</h3>
+          <p>スプレッドシート集計で週ごとの傾向が見やすく、必要に応じて専門職と情報共有。</p>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0;">③ プライバシー配慮</h3>
+          <p>最小限データで運用。削除・エクスポートにも対応予定。</p>
         </div>
       </div>
     </div>
   </section>
 
- <section class="container" id="cf" style="padding-top:32px;">
-  <h2>クラウドファンディング準備中</h2>
-  <p class="lead">
-    食習慣サポートLINE Botを、誰でも続けやすく。記録が苦手な人にも届く形にするための支援を募る準備をしています。
-  </p>
-  <ul>
-    <li>改良：精度・返信スピード・週次ふり返りの強化</li>
-    <li>配慮：プライバシー／データ削除・エクスポートの仕組み</li>
-    <li>公開：使い方ガイドとサンプルメニュー</li>
-  </ul>
-  <p class="note">※開始時期が決まり次第、Xでお知らせします。</p>
-  <a class="btn ghost" href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener">進捗をXでフォロー</a>
-</section>
+  <!-- ===== Demo ===== -->
+  <section id="demo">
+    <div class="container">
+      <h2>デモを見る</h2>
+      <p class="lead">写真送信 → 解析 → 目安を返信 → ワンタップ記録（開発中）。</p>
+
+      <div class="grid" style="margin-top:12px;">
+        <figure>
+          <a href="/akarilab/assets/demo-chat-01.jpg" target="_blank" rel="noopener">
+            <img class="shot" src="/akarilab/assets/demo-chat-01.jpg" alt="① 写真送信→解析中">
+          </a>
+          <figcaption class="note">① 写真送信 → 解析中</figcaption>
+        </figure>
+
+        <figure>
+          <a href="/akarilab/assets/demo-chat-02.jpg" target="_blank" rel="noopener">
+            <img class="shot" src="/akarilab/assets/demo-chat-02.jpg" alt="② 要約＋目安の返信→登録確認">
+          </a>
+          <figcaption class="note">② 要約＋目安の返信 → そのまま記録</figcaption>
+        </figure>
+      </div>
+
+      <small class="note">※画面は開発中です。仕様は今後変更される場合があります。</small>
+    </div>
+  </section>
+
+  <!-- ===== CF ===== -->
+  <section id="cf">
+    <div class="container">
+      <h2>クラウドファンディング準備中</h2>
+      <p class="lead">
+        記録が苦手でも続けやすい仕組みへ。精度・返信スピード・週次ふり返りを強化し、<br>
+        誰にとっても「やさしい」AIサポートを形にします。
+      </p>
+
+      <div class="grid" style="margin-top:8px;">
+        <div class="card">
+          <strong>開発の主な使い道</strong>
+          <ul class="clean">
+            <li>画像解析の精度向上／応答スピード改善</li>
+            <li>週次レポート・目標設定フローの整備</li>
+            <li>データ削除・エクスポート機能の実装</li>
+          </ul>
+        </div>
+        <div class="card">
+          <strong>お知らせ方法</strong>
+          <ul class="clean">
+            <li>X（旧Twitter）で随時アナウンス</li>
+            <li>開始時はサイトでも告知</li>
+          </ul>
+          <div style="margin-top:10px;">
+            <a class="btn ghost" href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener">進捗をXでフォロー</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ===== Footer ===== -->
   <footer>
-    <div class="container" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+    <div class="container footer-line">
       <div>© 2025 AkarI Lab</div>
-      <div class="social">
-        <a href="privacy.html">プライバシーポリシー</a>・
-        <a href="terms.html">利用規約</a>・
-        <a href="https://x.com/waveblasttaiyo" target="_blank">X</a>
+      <div>
+        <a href="/akarilab/privacy.html">プライバシーポリシー</a>
+        <span>・</span>
+        <a href="/akarilab/terms.html">利用規約</a>
+        <span>・</span>
+        <a href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener">X</a>
       </div>
     </div>
   </footer>
