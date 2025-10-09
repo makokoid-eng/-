@@ -8,7 +8,7 @@
   <title>食習慣サポートLINE Bot｜写真を送るだけで目安フィードバック</title>
   <meta name="description" content="LINEで食事写真を送ると、AIが要約して野菜・たんぱく質・kcalの“目安”を返信。毎日のふり返りをシンプルに。">
 
-  <!-- OGP（ogp.jpg は後で追加OK。PNGなら拡張子を .png に変更） -->
+  <!-- OGP（ogp.jpg を後で追加すれば自動でSNSカードに反映） -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="食習慣サポートLINE Bot">
   <meta property="og:description" content="写真を送るだけ。AIが要約＆栄養の目安を返信。">
@@ -21,130 +21,120 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* 最小限のレイアウト補助（既存styles.cssと両立） */
+    header{ position:sticky; top:0; background:#fff; border-bottom:1px solid #f3f4f6; z-index:10; }
+    .nav{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 0; }
+    .logo{ display:flex; align-items:center; gap:10px; font-weight:700; }
+    .logo img{ width:32px; height:32px; border-radius:6px; object-fit:cover; }
+    .navlinks a{ margin:0 8px; text-decoration:none; }
+    .actions{ display:flex; gap:8px; }
+    .btn.primary{ background:#16a34a; color:#fff; }
+    .btn.ghost{ border:1px solid #e5e7eb; }
+    .hero-grid{ display:grid; grid-template-columns:1.2fr 1fr; gap:24px; align-items:center; }
+    @media (max-width:780px){ .hero-grid{ grid-template-columns:1fr; } }
+    .bg-soft{ background:#fff6d6; background-image:url('assets/bg-lantern.jpg'); background-size:cover; background-position:center; }
+    .grid-auto{ display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+  </style>
 </head>
 <body>
-  <!-- 背景（全ページ） -->
-  <div class="page-bg" aria-hidden="true"></div>
 
-  <!-- ===== Header ===== -->
+  <!-- Header -->
   <header>
     <div class="container nav">
       <div class="logo">
-        <img src="/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/assets/images/hero.png?v=1" alt="サービスロゴ">
+        <img src="assets/hero.png" alt="サービスロゴ">
         <span>食習慣サポートLINE Bot</span>
       </div>
       <nav class="navlinks">
         <a href="#features">特徴</a>
         <a href="#how">使い方</a>
         <a href="#demo">デモ</a>
-        <a href="#for">活用例</a>
-        <a href="#faq">FAQ</a>
-        <a href="#contact">お問い合わせ</a>
       </nav>
       <div class="actions">
         <a class="btn ghost" href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener">X</a>
-        <a class="btn primary" href="https://line.me/R/ti/p/%40227zyjps" target="_blank" rel="noopener" aria-label="LINEで友だち追加">LINEで使う</a>
+        <a class="btn primary" href="https://line.me/R/ti/p/@227zyjps" target="_blank" rel="noopener">LINEで使う</a>
       </div>
     </div>
   </header>
 
   <main>
-    <!-- ===== Hero ===== -->
-    <section class="hero">
-      <div class="container hero-grid">
-        <div>
-          <span class="badge">写真を送るだけ／AIが要約と数値の目安</span>
-          <h1>“食べた”を気軽に見える化。<br>LINEで、毎日のふり返りを。</h1>
-          <p class="lead">
-            写真を1枚送ると、AIが<strong>野菜量・たんぱく質・kcal</strong>の<strong>目安</strong>と要約を返信します。<br>
-            「OK」で記録、ズレは「修正」で微調整。自分の振り返りや、必要に応じた情報共有の素材づくりに。
-          </p>
-          <div class="hero-cta">
-            <a class="btn primary" href="https://line.me/R/ti/p/%40227zyjps" target="_blank" rel="noopener">LINEで使い始める</a>
-            <a class="btn" href="#demo">1分デモを見る</a>
-          </div>
-          <p class="note" style="margin-top:10px;">
-            ※表示される数値はあくまで目安です。体調・食事管理に関する判断は担当の専門職にご相談ください。
-          </p>
+    <!-- Hero -->
+    <section class="container hero-grid" style="padding-top:28px;">
+      <div>
+        <h1 class="hero-h1">“食べた”を気軽に見える化。<br>LINEで、毎日のふり返りを。</h1>
+        <p class="lead">写真を送るだけ。AIが<strong>野菜・たんぱく質・kcal</strong>の<strong>目安</strong>と要約を返信。</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <a class="btn primary" href="https://line.me/R/ti/p/@227zyjps" target="_blank" rel="noopener">LINEで使い始める</a>
+          <a class="btn" href="#demo">1分デモを見る</a>
         </div>
-        <div class="hero-figure">
-          <img src="/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/assets/images/hero.png?v=1" alt="LINEで写真送信→AIが要約＆栄養の目安を返信するデモ">
-        </div>
+        <small class="notice">※数値は目安です。医療・栄養指導の代替ではありません。</small>
       </div>
+      <div><img src="assets/hero.png" alt="料理写真" class="media"></div>
     </section>
 
-    <!-- ===== 特徴 ===== -->
-    <section id="features">
+    <!-- 特徴 -->
+    <section id="features" class="section bg-soft">
       <div class="container">
         <h2>3つの特徴</h2>
-        <p class="sub">無理なく続けやすく、日々の記録づくりを後押し。</p>
-        <div class="grid-3">
-          <div class="card">
-            <h3>① 写真→すぐ目安</h3>
-            <p>撮って送るだけ。要約と数値の目安を数秒で返信。OK/修正の2タップで記録が整います。</p>
-          </div>
-          <div class="card">
-            <h3>② 共有しやすい設計</h3>
-            <p>スプレッドシート連携で週ごとの一覧が作りやすく、必要に応じて専門職との情報共有にも。</p>
-          </div>
-          <div class="card">
-            <h3>③ プライバシーに配慮</h3>
-            <p>最小限のデータを安全に扱う方針。削除・エクスポートの仕組みも順次対応予定です。</p>
-          </div>
+        <div class="grid-auto">
+          <div class="card"><h3>① 写真→すぐ目安</h3><p>撮って送るだけ。要約と数値の目安を数秒で返信。</p></div>
+          <div class="card"><h3>② 共有しやすい</h3><p>スプレッドシート連携で週次のふり返りが簡単。</p></div>
+          <div class="card"><h3>③ プライバシー配慮</h3><p>最小限のデータを安全に扱う方針。削除・エクスポート対応。</p></div>
         </div>
       </div>
     </section>
 
-    <!-- ===== 使い方 ===== -->
-    <section id="how">
+    <!-- 使い方 -->
+    <section id="how" class="section">
       <div class="container">
         <h2>使い方</h2>
-        <p class="sub">4ステップでシンプルに。</p>
-        <div class="how">
+        <div class="grid-auto">
           <div class="card"><strong>1. 友だち追加</strong><p>初回に目標や好みを簡単設定。</p></div>
-          <div class="card"><strong>2. 写真を送る</strong><p>テキストだけでもOK。AIが要約と数値の目安を返信。</p></div>
-          <div class="card"><strong>3. OK / 修正</strong><p>そのまま記録、またはボタンで微調整。</p></div>
-          <div class="card"><strong>4. 週ごとに振り返り</strong><p>傾向が見えやすく、次の一歩を考えやすく。</p></div>
+          <div class="card"><strong>2. 写真を送る</strong><p>テキストのみでもOK。AIが要約と目安を返信。</p></div>
+          <div class="card"><strong>3. OK / 修正</strong><p>そのまま記録、ズレはボタンで微調整。</p></div>
+          <div class="card"><strong>4. 週ごとに振り返り</strong><p>傾向が見えて次の一歩が楽に。</p></div>
         </div>
       </div>
     </section>
 
-    <!-- ===== デモ ===== -->
-    <section id="demo">
-      <div class="container two">
-        <div>
-          <h2>1分デモ</h2>
-          <p class="sub">実際の操作感を確認できます。</p>
-          <div class="card">
-            <img src="/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/makokoid-eng/assets/images/demo-01.png?v=1" alt="操作デモ">
-          </div>
-          <p class="note">※画面は開発中です。仕様は今後変更される場合があります。</p>
+    <!-- デモ -->
+    <section id="demo" class="section">
+      <div class="container">
+        <h2>1分デモ</h2>
+        <p class="lead">写真を送信 → AIが要約 → 目安を返信 → ワンタップで記録。</p>
+
+        <!-- LINEスクショ（あれば表示） -->
+        <div class="grid-auto" style="margin-top:12px;">
+          <a href="assets/demo-chat-01.jpg" target="_blank" rel="noopener">
+            <img class="media" src="assets/demo-chat-01.jpg" alt="送信→解析中の画面" loading="lazy">
+          </a>
+          <a href="assets/demo-chat-02.jpg" target="_blank" rel="noopener">
+            <img class="media" src="assets/demo-chat-02.jpg" alt="栄養目安の返答→登録確認" loading="lazy">
+          </a>
         </div>
-        <div>
-          <h2>ロードマップ</h2>
-          <ul>
-            <li>OK確定／修正フローの安定化</li>
-            <li>スプレッドシート集計・週次レポートの改善</li>
-            <li>満足度など簡易ログの追加（任意）</li>
-          </ul>
-          <p class="note">進捗は X アカウントでお知らせします。</p>
+
+        <!-- 静止画デモ（なければ自動で404になるだけ。用意済みなら表示） -->
+        <div class="card" style="margin-top:16px;">
+          <img class="media" src="assets/demo-01.png" alt="操作イメージ" loading="lazy">
         </div>
+
+        <small class="notice">※画面は開発中です。仕様は今後変更される場合があります。</small>
       </div>
     </section>
   </main>
 
-  <!-- ===== Footer ===== -->
-  <footer>
-    <div class="container">
-      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-        <div>© 2025 食習慣サポートLINE Bot</div>
-        <div class="social">
-          <a href="privacy.html">プライバシーポリシー</a><span>・</span>
-          <a href="terms.html">利用規約</a><span>・</span>
-          <a href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener">X</a>
-        </div>
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div>© 2025 AkarI Lab</div>
+      <div class="social">
+        <a href="privacy.html">プライバシーポリシー</a><span>・</span>
+        <a href="terms.html">利用規約</a><span>・</span>
+        <a href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener">X</a>
       </div>
     </div>
   </footer>
+
 </body>
 </html>
