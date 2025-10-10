@@ -2,8 +2,7 @@ name: Deploy LINE webhook to Cloud Functions
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
     paths:
       - 'cloud/functions/line-webhook/**'
       - '.github/workflows/line-webhook-deploy.yml'
@@ -16,10 +15,12 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     env:
       PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
       REGION: ${{ secrets.GCP_REGION }}
       FUNCTION_NAME: ${{ secrets.GCP_LINE_FUNCTION_NAME }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,9 +32,9 @@ jobs:
 
       - name: Install dependencies
         working-directory: cloud/functions/line-webhook
-        run: npm install
+        run: npm ci
 
-      - name: Authenticate to Google Cloud
+      - name: Authenticate to Google Cloud (WIF)
         uses: google-github-actions/auth@v2
         with:
           token_format: access_token
@@ -42,13 +43,19 @@ jobs:
 
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
+        with:
+          export_default_credentials: true
 
-      - name: Deploy Cloud Function
+      - name: Deploy Cloud Function (Gen2)
+        shell: bash
         working-directory: cloud/functions/line-webhook
         env:
           LINE_CHANNEL_SECRET: ${{ secrets.LINE_CHANNEL_SECRET }}
           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
         run: |
+          set -euo pipefail
+          gcloud --quiet --project="$PROJECT_ID" components list > /dev/null
+          echo "Deploying $FUNCTION_NAME to region $REGION (project: $PROJECT_ID)"
           gcloud functions deploy "$FUNCTION_NAME" \
             --gen2 \
             --region="$REGION" \
@@ -58,4 +65,5 @@ jobs:
             --source=. \
             --trigger-http \
             --allow-unauthenticated \
-            --set-env-vars LINE_CHANNEL_SECRET="$LINE_CHANNEL_SECRET",LINE_CHANNEL_ACCESS_TOKEN="$LINE_CHANNEL_ACCESS_TOKEN"
+            --set-env-vars "LINE_CHANNEL_SECRET=${LINE_CHANNEL_SECRET},LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN}"
+
