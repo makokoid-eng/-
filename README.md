@@ -62,10 +62,17 @@ npm start
 | --- | --- |
 | `GCP_PROJECT_ID` | デプロイ先のプロジェクト ID |
 | `GCP_REGION` | Cloud Functions を配置するリージョン (例: `asia-northeast1`) |
-| `GCP_LINE_FUNCTION_NAME` | デプロイする関数名 |
 | `GCP_WORKLOAD_IDENTITY_PROVIDER` | Workload Identity プロバイダのリソース名 (`projects/.../providers/...`) |
 | `GCP_SERVICE_ACCOUNT` | デプロイに使用するサービスアカウント (`name@project.iam.gserviceaccount.com`) |
+| `GCP_RUNTIME_SA` | Cloud Functions 実行用サービスアカウント (`name@project.iam.gserviceaccount.com`) |
 | `LINE_CHANNEL_SECRET` | LINE Developers で発行される Channel secret |
 | `LINE_CHANNEL_ACCESS_TOKEN` | LINE Developers で発行される Channel access token |
+| `SHEET_ID` | 連携する Google スプレッドシートの ID |
 
 設定が完了すると `.github/workflows/line-webhook-deploy.yml` が自動で Cloud Functions (Gen2) にデプロイします。手動デプロイが必要な場合は GitHub Actions の `workflow_dispatch` から実行できます。
+
+### googleapis が Cloud Functions に反映されない場合
+- 関数ディレクトリ (`cloud/functions/line-webhook`) に `package.json` を配置して `googleapis` を依存として明示する
+- `.gcloudignore` で `node_modules` を除外し、デプロイ時に依存を自動インストールさせる
+- GitHub Actions のデプロイジョブで `working-directory` を関数ディレクトリに固定する
+- デプロイ成功後は Cloud Logs に `googleapis` の初期化ログが出力されているか確認する
