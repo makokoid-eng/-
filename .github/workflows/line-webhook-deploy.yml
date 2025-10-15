@@ -15,6 +15,9 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloud/functions/line-webhook
 
     steps:
       - name: Checkout
@@ -26,7 +29,6 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        working-directory: cloud/functions/line-webhook
         run: npm install --omit=dev
 
       - name: Authenticate to Google Cloud (WIF)
@@ -42,7 +44,6 @@ jobs:
           export_default_credentials: true
 
       - name: Deploy Cloud Functions v2 (line-webhook)
-        working-directory: cloud/functions/line-webhook
         run: |
           gcloud functions deploy line-webhook \
             --gen2 \
