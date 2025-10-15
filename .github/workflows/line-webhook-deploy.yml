@@ -33,6 +33,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           token_format: access_token
+          audience: https://github.com/makokoid-eng/akarilab
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SA_EMAIL }}
 
