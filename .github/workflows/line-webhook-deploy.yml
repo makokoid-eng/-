@@ -31,14 +31,14 @@ jobs:
 
       - name: Deploy Cloud Functions v2 (line-webhook)
         working-directory: cloud/functions/line-webhook
-run: |
-  gcloud functions deploy line-webhook \
-    --gen2 \
-    --region="${{ secrets.GCP_REGION }}" \
-    --project="${{ secrets.GCP_PROJECT_ID }}" \
-    --runtime=nodejs20 \
-    --entry-point=app \         # ← export default app と一致
-    --source=. \
-    --trigger-http \
-    --allow-unauthenticated \
-    --set-env-vars "LINE_CHANNEL_SECRET=${{ secrets.LINE_CHANNEL_SECRET }},LINE_CHANNEL_ACCESS_TOKEN=${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}"
+        run: |
+          gcloud functions deploy line-webhook \
+            --gen2 \
+            --region="${{ secrets.GCP_REGION }}" \
+            --project="${{ secrets.GCP_PROJECT_ID }}" \
+            --runtime=nodejs20 \
+            --entry-point=app \
+            --source=. \
+            --trigger-http \
+            --allow-unauthenticated \
+            --set-env-vars "LINE_CHANNEL_SECRET=${{ secrets.LINE_CHANNEL_SECRET }},LINE_CHANNEL_ACCESS_TOKEN=${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}"
