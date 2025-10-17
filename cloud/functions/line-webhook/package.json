@@ -1,12 +1,8 @@
 {
   "name": "line-webhook",
   "version": "1.0.0",
-  "description": "LINE webhook (Cloud Functions v2) with Google Sheets integration",
+  "description": "Minimal LINE webhook HTTP function",
   "main": "index.js",
-  "type": "commonjs",
-  "engines": { "node": ">=20" },
-  "dependencies": {
-    "@line/bot-sdk": "^7.6.0",
-    "googleapis": "^131.0.0"
-  }
+  "type": "module",
+  "engines": { "node": ">=20" }
 }
