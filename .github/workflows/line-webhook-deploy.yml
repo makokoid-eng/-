@@ -37,7 +37,8 @@ jobs:
             --region="${{ secrets.GCP_REGION }}" \
             --project="${{ secrets.GCP_PROJECT_ID }}" \
             --runtime=nodejs20 \
-            --entry-point=app \
+            --entry-point=app
+working-directory: cloud/functions/line-webhook
             --source=. \
             --trigger-http \
             --allow-unauthenticated \
