@@ -4,5 +4,8 @@
   "description": "Minimal LINE webhook HTTP function",
   "main": "index.js",
   "type": "module",
-  "engines": { "node": ">=20" }
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "openai": "^4.67.3"
+  }
 }
