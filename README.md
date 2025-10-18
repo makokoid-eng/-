@@ -1,78 +1,74 @@
-# AkarI Lab ｜ AIの光で、人の人生に“あかり”を灯す
+# LINE 二段階返信 MVP (reply→push)
 
-https://makokoid-eng.github.io/akarilab/
+Google Cloud Functions Gen2 と Cloud Tasks を利用して、LINE 公式アカウントで即時返信と非同期 AI 応答を実現する最小構成です。
 
-AkarI Lab は、AIを人の暮らしに温かく溶け込ませる開発プロジェクトです。  
-第一弾の「食習慣サポートLINE Bot」は、写真を送るだけで〈野菜・たんぱく質・kcal〉の目安を返信します。
+## 必須環境変数
 
----
+`.env`（ローカル）または GCF 環境変数に以下を設定してください。
 
-## 📘 構成
-- `index.html` … メインLP（OGP/フォーム/投資家向け含む）
-- `privacy.html`, `terms.html` … 各種ポリシー
-- `assets/` … 画像・アイコン・OGP
+- `LINE_CHANNEL_ACCESS_TOKEN`
+- `LINE_CHANNEL_SECRET`
+- `GCP_PROJECT_ID`
+- `GCP_LOCATION`（例: `asia-northeast1`）
+- `TASKS_QUEUE_ID`（例: `line-async`）
+- `PUBLIC_WORKER_URL`（Cloud Tasks が呼び出すワーカーの完全 URL）
+- `OPENAI_API_KEY`（任意、将来の拡張用）
 
----
+`.env.sample` をコピーして `.env` を作成すると便利です。
 
-## 🧭 更新方法
-GitHub Pages を使用。  
-`main` ブランチに push するだけで自動的に公開されます。
+## セットアップ
 
-```bash
-git add .
-git commit -m "update"
-git push
-```
+1. 依存関係をインストールします。
 
-## 検索・SNS対策（任意）
+   ```bash
+   npm install
+   ```
 
-- `og:title` / `og:description` / `og:image` を適切に設定（済）
-- `robots.txt`/`sitemap.xml` は任意。必要に応じて追加
-- OGPを差し替えたら `?v=` のバージョン番号を更新し、Xカードバリデータで確認すること
+2. Cloud Tasks のキューを作成します。（例）
 
----
+   ```bash
+   gcloud tasks queues create line-async \
+     --location=asia-northeast1
+   ```
 
+3. Google Cloud Functions Gen2 にデプロイします。以下は例です。
 
----
+   ```bash
+   gcloud functions deploy lineApp \
+     --gen2 \
+     --region=asia-northeast1 \
+     --runtime=nodejs20 \
+     --entry-point=default \
+     --source=. \
+     --trigger-http \
+     --allow-unauthenticated \
+     --set-env-vars=LINE_CHANNEL_ACCESS_TOKEN=xxx,LINE_CHANNEL_SECRET=xxx,GCP_PROJECT_ID=your-project,GCP_LOCATION=asia-northeast1,TASKS_QUEUE_ID=line-async,PUBLIC_WORKER_URL=https://asia-northeast1-your-project.cloudfunctions.net/lineApp/tasks/worker
+   ```
 
-## ライセンス
-必要に応じて追記してください（例：All rights reserved）。
+   `PUBLIC_WORKER_URL` は Cloud Tasks が呼び出すワーカー URL に置き換えてください。
 
-## ☁️ Cloud Functions (LINE Webhook)
-Google Cloud Functions 第2世代で LINE Webhook を提供する Node.js 関数を `cloud/functions/line-webhook` に配置しています。ローカルで関数を確認する場合は以下を実行します。
+4. LINE Developers コンソールで Webhook URL を設定します。
 
-```bash
-cd cloud/functions/line-webhook
-npm install
-npm start
-```
+   ```
+   https://asia-northeast1-your-project.cloudfunctions.net/lineApp/line/webhook
+   ```
 
-### GitHub Actions + Workload Identity Federation
-`main` ブランチへの push で LINE Webhook 関数を自動デプロイします。事前に以下のリソースと GitHub Secrets を用意してください。
+## エンドポイント
 
-1. Google Cloud 上で Cloud Functions API / Artifact Registry API を有効化。
-2. デプロイ用サービスアカウントを作成し、少なくとも以下のロールを付与。
-   - Cloud Functions Admin
-   - Cloud Run Admin
-   - Service Account User (対象: Cloud Functions 実行サービスアカウント)
-3. 上記サービスアカウントを紐づける Workload Identity プロバイダを作成し、GitHub リポジトリ `makokoid-eng/akarilab` をトラスト設定。
-4. GitHub Secrets を設定。
+- `POST /line/webhook` — LINE からのイベント受付。1 秒以内に固定文を reply し、Cloud Tasks にジョブを登録します。
+- `POST /tasks/worker` — Cloud Tasks から呼ばれるワーカー。AI パイプラインを実行し、push メッセージを送信します。
+- `GET /healthz` — 動作確認用エンドポイント。
 
-| Secret 名 | 内容 |
-| --- | --- |
-| `GCP_PROJECT_ID` | デプロイ先のプロジェクト ID |
-| `GCP_REGION` | Cloud Functions を配置するリージョン (例: `asia-northeast1`) |
-| `GCP_WORKLOAD_IDENTITY_PROVIDER` | Workload Identity プロバイダのリソース名 (`projects/.../providers/...`) |
-| `GCP_SERVICE_ACCOUNT` | デプロイに使用するサービスアカウント (`name@project.iam.gserviceaccount.com`) |
-| `GCP_RUNTIME_SA` | Cloud Functions 実行用サービスアカウント (`name@project.iam.gserviceaccount.com`) |
-| `LINE_CHANNEL_SECRET` | LINE Developers で発行される Channel secret |
-| `LINE_CHANNEL_ACCESS_TOKEN` | LINE Developers で発行される Channel access token |
-| `SHEET_ID` | 連携する Google スプレッドシートの ID |
+## 動作確認フロー
 
-設定が完了すると `.github/workflows/line-webhook-deploy.yml` が自動で Cloud Functions (Gen2) にデプロイします。手動デプロイが必要な場合は GitHub Actions の `workflow_dispatch` から実行できます。
+1. ユーザーが LINE でメッセージや画像を送信します。
+2. `/line/webhook` が即時に固定文を reply します。
+3. 同時に Cloud Tasks にジョブが投入されます。
+4. ワーカー `/tasks/worker` が AI ダミー処理を実行し、push メッセージで本回答を送信します。
 
-### googleapis が Cloud Functions に反映されない場合
-- 関数ディレクトリ (`cloud/functions/line-webhook`) に `package.json` を配置して `googleapis` を依存として明示する
-- `.gcloudignore` で `node_modules` を除外し、デプロイ時に依存を自動インストールさせる
-- GitHub Actions のデプロイジョブで `working-directory` を関数ディレクトリに固定する
-- デプロイ成功後は Cloud Logs に `googleapis` の初期化ログが出力されているか確認する
+## 次フェーズで予定している強化
+
+- LINE 署名検証の追加
+- Cloud Tasks からの OIDC 署名検証
+- 画像バイナリの取得と実際の AI モデル連携
+- Firestore や Redis 等を利用した重複防止・状態管理
