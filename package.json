@@ -1,7 +1,7 @@
 {
   "name": "line-two-step-reply",
-  "version": "0.1.0",
-  "description": "LINE two-step reply MVP using Cloud Functions Gen2 and Cloud Tasks",
+  "version": "0.2.0",
+  "description": "LINE two-step reply MVP using Cloud Functions Gen2 and Cloud Tasks with Firestore logging",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -15,7 +15,8 @@
     "@google-cloud/tasks": "^4.3.1",
     "@line/bot-sdk": "^8.4.0",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "firebase-admin": "^12.0.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

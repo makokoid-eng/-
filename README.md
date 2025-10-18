@@ -1,74 +1,73 @@
-# LINE 二段階返信 MVP (reply→push)
+# LINE 二段階返信 MVP (reply→push) — Firestore ログ永続化対応
 
-Google Cloud Functions Gen2 と Cloud Tasks を利用して、LINE 公式アカウントで即時返信と非同期 AI 応答を実現する最小構成です。
+Google Cloud Functions Gen2（Node.js 20 / TypeScript）と Cloud Tasks を利用した、LINE ボットの二段階返信（即時 reply → 非同期 push）MVP です。これまで Google スプレッドシートへ記録していたログを、Cloud Firestore（Standard / Production / リージョン=asia-northeast1）へ移行し、Sheets とのデュアルライトで安全に切り替えられるようになっています。
 
-## 必須環境変数
+## 必須環境
 
-`.env`（ローカル）または GCF 環境変数に以下を設定してください。
+- Firestore: Standard / Production / リージョン = `asia-northeast1`
+- Cloud Functions Gen2 / Node.js 20
+- Cloud Tasks
+- LINE Messaging API（`@line/bot-sdk`）
+
+## 環境変数
+
+`.env.sample` をコピーして `.env` を作成し、以下を設定します。すべて `deploy_gcf.sh` が読み取り、`--set-env-vars` で関数に渡します。
 
 - `LINE_CHANNEL_ACCESS_TOKEN`
 - `LINE_CHANNEL_SECRET`
 - `GCP_PROJECT_ID`
 - `GCP_LOCATION`（例: `asia-northeast1`）
 - `TASKS_QUEUE_ID`（例: `line-async`）
-- `PUBLIC_WORKER_URL`（Cloud Tasks が呼び出すワーカーの完全 URL）
-- `OPENAI_API_KEY`（任意、将来の拡張用）
+- `TASKS_DLQ_ID`（例: `line-async-dlq`）
+- `PUBLIC_WORKER_URL`（Cloud Tasks から呼び出す `/tasks/worker` の完全 URL）
+- `TASKS_SA_EMAIL`（任意。指定すると Cloud Tasks が OIDC トークンを付与）
+- `OPENAI_API_KEY`（未使用でも空で保持）
+- `DUAL_WRITE`（`true` で Sheets と Firestore の二重書き込み）
 
-`.env.sample` をコピーして `.env` を作成すると便利です。
+> **メモ:** `PUBLIC_WORKER_URL` は Cloud Functions デプロイ後に付与されるベース URL に `/tasks/worker` を足したものです。README 末尾の検証手順を参照してください。
 
-## セットアップ
+## 初期設定手順
 
 1. 依存関係をインストールします。
-
    ```bash
    npm install
    ```
-
-2. Cloud Tasks のキューを作成します。（例）
-
+2. Firestore 権限を Functions 実行サービスアカウントに付与します。
    ```bash
-   gcloud tasks queues create line-async \
-     --location=asia-northeast1
+   scripts/setup_firestore_iam.sh
    ```
-
-3. Google Cloud Functions Gen2 にデプロイします。以下は例です。
-
+3. Cloud Tasks のキュー（本隊 + Dead Letter Queue）を作成・更新します。
    ```bash
-   gcloud functions deploy lineApp \
-     --gen2 \
-     --region=asia-northeast1 \
-     --runtime=nodejs20 \
-     --entry-point=default \
-     --source=. \
-     --trigger-http \
-     --allow-unauthenticated \
-     --set-env-vars=LINE_CHANNEL_ACCESS_TOKEN=xxx,LINE_CHANNEL_SECRET=xxx,GCP_PROJECT_ID=your-project,GCP_LOCATION=asia-northeast1,TASKS_QUEUE_ID=line-async,PUBLIC_WORKER_URL=https://asia-northeast1-your-project.cloudfunctions.net/lineApp/tasks/worker
+   scripts/create_tasks_queues.sh
+   ```
+4. Functions をデプロイします。`.env` を読み込み、必要な環境変数をすべて渡します。
+   ```bash
+   scripts/deploy_gcf.sh
    ```
 
-   `PUBLIC_WORKER_URL` は Cloud Tasks が呼び出すワーカー URL に置き換えてください。
+## LINE Developers 設定
 
-4. LINE Developers コンソールで Webhook URL を設定します。
+- Webhook URL: `https://asia-northeast1-<PROJECT_ID>.cloudfunctions.net/lineApp/line/webhook`
+- 応答メッセージは即時 reply（固定文）→ Cloud Tasks 経由の push メッセージで最終回答、という二段階構成です。
 
-   ```
-   https://asia-northeast1-your-project.cloudfunctions.net/lineApp/line/webhook
-   ```
+## 動作・検証フロー
 
-## エンドポイント
+1. ユーザーが画像またはテキストを送信します。
+2. `/line/webhook` が即時に固定文で reply し、`logQueued` で Firestore に状態を記録します（`DUAL_WRITE=true` の場合は Sheets にも記録）。
+3. Cloud Tasks に投入されたジョブが `/tasks/worker` を呼び出し、ダミー AI パイプラインを実行して push メッセージを送信します。
+4. 成功時は Firestore `lineLogs` ドキュメントが `queued → done` へ遷移し、`resultSummary` と `latencyMs` が更新されます。失敗時は `status=error` と例外詳細が保存されます。
 
-- `POST /line/webhook` — LINE からのイベント受付。1 秒以内に固定文を reply し、Cloud Tasks にジョブを登録します。
-- `POST /tasks/worker` — Cloud Tasks から呼ばれるワーカー。AI パイプラインを実行し、push メッセージを送信します。
-- `GET /healthz` — 動作確認用エンドポイント。
+Firestore コンソール（`lineLogs` コレクション）で、`queued → done` の遷移を確認してください。
 
-## 動作確認フロー
+## Sheets から Firestore への切り替え手順
 
-1. ユーザーが LINE でメッセージや画像を送信します。
-2. `/line/webhook` が即時に固定文を reply します。
-3. 同時に Cloud Tasks にジョブが投入されます。
-4. ワーカー `/tasks/worker` が AI ダミー処理を実行し、push メッセージで本回答を送信します。
+1. 移行初期は `.env` の `DUAL_WRITE=true` のままデプロイし、Sheets と Firestore の二重書き込みを行います。
+2. 数日運用してデータ整合が取れていることを確認します。
+3. `.env` の `DUAL_WRITE=false` に変更し、`scripts/deploy_gcf.sh` を再実行して再デプロイします。以降は Firestore のみへ書き込みます。
 
-## 次フェーズで予定している強化
+## 今後の拡張候補
 
-- LINE 署名検証の追加
-- Cloud Tasks からの OIDC 署名検証
-- 画像バイナリの取得と実際の AI モデル連携
-- Firestore や Redis 等を利用した重複防止・状態管理
+- Cloud Tasks からの OIDC トークン検証強化
+- LINE push メッセージの Flex Message 化
+- `messageId` をキーにした冪等制御（重複防止）
+- 画像バイナリ取得と AI モデル差し替え
