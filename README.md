@@ -1,3 +1,22 @@
+# プロジェクト構成（推奨の読み順）
+
+1. [.env.sample](./.env.sample)
+2. [README.md](./README.md)
+3. [scripts/](./scripts/) – セットアップとデプロイ用スクリプト
+4. [src/](./src/) – アプリ本体（/line/webhook, /tasks/worker）
+5. [cloud/functions/line-webhook/](./cloud/functions/line-webhook/) – 旧構成（必要に応じ参照）
+6. [CONTRIBUTING.md](./CONTRIBUTING.md)
+7. [privacy.html](./privacy.html)
+8. [index.html](./index.html)
+9. [robots.txt](./robots.txt)
+10. [package.json](./package.json)
+
+## 使い始めの手順（3ステップ）
+
+- `.env.sample` をコピーして `.env` を作成（コミット禁止）
+- `scripts/` のセットアップスクリプトを順に実行
+- LINE Developers の Webhook に `/line/webhook` を設定
+
 # LINE 二段階返信 MVP (reply→push) — Firestore ログ永続化対応
 
 Google Cloud Functions Gen2（Node.js 20 / TypeScript）と Cloud Tasks を利用した、LINE ボットの二段階返信（即時 reply → 非同期 push）MVP です。これまで Google スプレッドシートへ記録していたログを、Cloud Firestore（Standard / Production / リージョン=asia-northeast1）へ移行し、Sheets とのデュアルライトで安全に切り替えられるようになっています。
