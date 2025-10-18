@@ -61,7 +61,55 @@ export const app = (req, res) => {
       return;
     }
 
-    res.status(200).send('ok');
+    (async () => {
+      try {
+        const body =
+          typeof req.body === 'string'
+            ? JSON.parse(req.body || '{}')
+            : req.body ?? {};
+        const events = Array.isArray(body?.events) ? body.events : [];
+
+        for (const event of events) {
+          const message = event?.message;
+          if (!message || message.type !== 'image' || !message.id) {
+            continue;
+          }
+
+          const accessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+          if (!accessToken) {
+            throw new Error('LINE_CHANNEL_ACCESS_TOKEN is not set');
+          }
+
+          const response = await fetch(
+            `https://api-data.line.me/v2/bot/message/${encodeURIComponent(
+              message.id,
+            )}/content`,
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            },
+          );
+
+          if (!response.ok) {
+            throw new Error(`Failed to fetch image content: ${response.status}`);
+          }
+
+          const arrayBuffer = await response.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          const dataUrl = `data:image/jpeg;base64,${buffer.toString('base64')}`;
+          console.log(`image_data_url_length=${dataUrl.length}`);
+        }
+      } catch (error) {
+        console.error('line webhook error', error);
+      }
+    })()
+      .catch((error) => {
+        console.error('unexpected line webhook error', error);
+      })
+      .finally(() => {
+        res.status(200).send('ok');
+      });
     return;
   }
 
