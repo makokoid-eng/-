@@ -1,3 +1,4 @@
+
 import crypto from 'node:crypto';
 
 const getRawBodyBuffer = (req) => {
@@ -46,6 +47,8 @@ const isValidSignature = (req) => {
   }
 };
 
+
+// smoke
 export const app = (req, res) => {
   if (req.method === 'GET') {
     res.status(200).send('alive');
