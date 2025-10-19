@@ -31,6 +31,14 @@ jobs:
 
       - name: Deploy Cloud Functions v2 (line-webhook)
         working-directory: cloud/functions/line-webhook
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_CHANNEL_SECRET: ${{ secrets.LINE_CHANNEL_SECRET }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_LOCATION: ${{ secrets.GCP_LOCATION }}
+          TASKS_QUEUE_ID: ${{ secrets.TASKS_QUEUE_ID }}
+          PUBLIC_WORKER_URL: ${{ secrets.PUBLIC_WORKER_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           gcloud functions deploy line-webhook \
             --gen2 \
@@ -40,4 +48,5 @@ jobs:
             --entry-point=app \
             --source=. \
             --trigger-http \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --set-env-vars="LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN},LINE_CHANNEL_SECRET=${LINE_CHANNEL_SECRET},GCP_PROJECT_ID=${GCP_PROJECT_ID},GCP_LOCATION=${GCP_LOCATION},TASKS_QUEUE_ID=${TASKS_QUEUE_ID},PUBLIC_WORKER_URL=${PUBLIC_WORKER_URL},OPENAI_API_KEY=${OPENAI_API_KEY}"
