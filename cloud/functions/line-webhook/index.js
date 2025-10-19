@@ -93,6 +93,7 @@ async function summarizeMeal(dataUrl) {
     ],
   });
   const raw = ai.choices?.[0]?.message?.content ?? '';
+  console.log('AI raw output=', raw?.slice(0, 200));
   const s = raw.indexOf('{');
   const e = raw.lastIndexOf('}');
   let parsed = null;
@@ -137,10 +138,24 @@ export const app = async (req, res) => {
       if (ev.replyToken)
         await replyLine(ev.replyToken, '画像を受け取りました🔎 解析中です…');
 
+      console.log('stage: image event received');
       const dataUrl = await downloadImageAsDataUrl(ev.message.id);
-      const resultText = await summarizeMeal(dataUrl);
-      if (ev.source?.userId)
-        await pushLine(ev.source.userId, resultText);
+      console.log('stage: image downloaded');
+
+      console.log('stage: ai start');
+      let resultText = null;
+      try {
+        resultText = await summarizeMeal(dataUrl);
+        console.log('stage: ai done');
+      } catch (e) {
+        console.error('stage: ai error', e);
+      }
+
+      const text = resultText || '解析に失敗しました🙏 もう一度お試しください';
+      if (ev.source?.userId) {
+        const ok = await pushLine(ev.source.userId, text);
+        console.log('push status=', ok);
+      }
 
       return res.status(200).send('ok');
     }
@@ -152,13 +167,15 @@ export const app = async (req, res) => {
 
     return res.status(200).send('ok');
   } catch (e) {
-    console.error('error in handler', e);
+    console.error('post-handler error', e);
     try {
-      if (ev?.source?.userId)
-        await pushLine(
+      if (ev?.source?.userId) {
+        const ok = await pushLine(
           ev.source.userId,
           '処理でエラーが起きました🙏 もう一度お試しください',
         );
+        console.log('push status=', ok);
+      }
     } catch (ee) {
       console.error('fallback push error', ee);
     }
