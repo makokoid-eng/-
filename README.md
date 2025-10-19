@@ -1,3 +1,22 @@
+# 環境変数の設定
+
+GitHub Actions からデプロイする際は、以下のキーを GitHub リポジトリの **Settings > Secrets and variables > Actions** で登録してください。
+
+- `LINE_CHANNEL_ACCESS_TOKEN`
+- `LINE_CHANNEL_SECRET`
+- `GCP_PROJECT_ID`
+- `GCP_LOCATION`（例: `asia-northeast1`）
+- `TASKS_QUEUE_ID`（例: `line-async`）
+- `PUBLIC_WORKER_URL`（例: `https://asia-northeast1-uplifted-sol-472609-p5.a.run.app/tasks/worker`）
+- `OPENAI_API_KEY`
+
+LINE Developers には Webhook URL を、Cloud Tasks には Worker URL を以下のように設定します（`asia-northeast1-uplifted-sol-472609-p5` の例）。
+
+- Webhook: `https://asia-northeast1-uplifted-sol-472609-p5.a.run.app/line/webhook`
+- Worker: `https://asia-northeast1-uplifted-sol-472609-p5.a.run.app/tasks/worker`
+
+ローカル開発時には `.env.sample` をコピーして `.env` を作成します（`.gitignore` によりコミットされません）。
+
 # プロジェクト構成（推奨の読み順）
 
 1. [.env.sample](./.env.sample)
