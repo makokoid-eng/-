@@ -49,7 +49,7 @@ jobs:
           gcloud config set functions/region "${REGION}"
           gcloud --version
 
-      - name: Preflight: check service account
+      - name: "Preflight: check service account"
         run: |
           set -euo pipefail
           echo "PROJECT_ID=${PROJECT_ID}"
