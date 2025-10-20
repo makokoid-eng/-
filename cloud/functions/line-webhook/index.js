@@ -2,6 +2,9 @@ import crypto from 'crypto';
 import OpenAI from 'openai';
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
+if (!openaiApiKey) {
+  console.error('stage: ai init error - OPENAI_API_KEY missing');
+}
 const openai = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
 const channelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
 const channelSecret = process.env.LINE_CHANNEL_SECRET;
@@ -35,8 +38,7 @@ async function replyLine(replyToken, text) {
       messages: [{ type: 'text', text }],
     }),
   });
-  console.log('reply status=', resp.status);
-  return resp.ok;
+  return resp.status;
 }
 
 async function pushLine(to, text) {
@@ -53,11 +55,10 @@ async function pushLine(to, text) {
       messages: [{ type: 'text', text }],
     }),
   });
-  console.log('push status=', resp.status);
-  return resp.ok;
+  return resp.status;
 }
 
-async function downloadImageAsDataUrl(messageId) {
+async function downloadImageAsBase64(messageId) {
   if (!channelAccessToken) throw new Error('LINE_CHANNEL_ACCESS_TOKEN is not set');
 
   const r = await fetch(
@@ -70,49 +71,64 @@ async function downloadImageAsDataUrl(messageId) {
   );
   if (!r.ok) throw new Error(`LINE content ${r.status}`);
   const buf = Buffer.from(await r.arrayBuffer());
-  const dataUrl = `data:image/jpeg;base64,${buf.toString('base64')}`;
-  console.log('image_data_url_length=', dataUrl.length);
-  return dataUrl;
+  console.log('stage: image downloaded');
+  const base64 = buf.toString('base64');
+  console.log('stage: image to base64 length=', base64?.length || 0);
+  return base64;
 }
 
-async function summarizeMeal(dataUrl) {
-  if (!openai) throw new Error('OPENAI_API_KEY is not set');
+async function summarizeMealFromBase64(imageBase64) {
+  console.log('stage: ai start');
+  if (!openai) throw new Error('OPENAI client not initialized');
 
-  const sys =
-    '食事画像を栄養視点で要約。短い日本語コメントとJSON(food_items[], estimates{calorie_kcal,protein_g,fat_g,carb_g}, quality(0-5), advice)。JSONはコードブロックなし。';
-  const ai = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      { role: 'system', content: sys },
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), 60_000);
+
+  try {
+    const dataUrl = `data:image/jpeg;base64,${imageBase64}`;
+    const resp = await openai.chat.completions.create(
       {
-        role: 'user',
-        content: [
-          { type: 'text', text: 'この食事を推定して。' },
-          { type: 'input_image', image_url: dataUrl },
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: 'この料理写真を短く要約し、主要な具材を3つ抽出し、日本語で返答。JSONで {summary:string, ingredients:string[]} を返して。',
+              },
+              { type: 'image_url', image_url: { url: dataUrl } },
+            ],
+          },
         ],
       },
-    ],
-  });
-  const raw = ai.choices?.[0]?.message?.content ?? '';
-  console.log('AI raw output=', raw?.slice(0, 200));
-  const s = raw.indexOf('{');
-  const e = raw.lastIndexOf('}');
-  let parsed = null;
-  if (s >= 0 && e > s) {
+      { signal: controller.signal },
+    );
+
+    const raw = resp?.choices?.[0]?.message?.content || '';
+    console.log('AI raw output=', String(raw).slice(0, 200));
+
+    const jsonMatch = String(raw).match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('no JSON in response');
+    let obj;
     try {
-      parsed = JSON.parse(raw.slice(s, e + 1));
-    } catch {}
+      obj = JSON.parse(jsonMatch[0]);
+    } catch (e) {
+      console.log('parse error =', e?.message);
+      throw e;
+    }
+
+    if (!obj.summary || !Array.isArray(obj.ingredients)) {
+      throw new Error('invalid JSON shape');
+    }
+    console.log('stage: ai done');
+    return obj;
+  } catch (err) {
+    console.error('stage: ai error =', err?.message || err);
+    throw err;
+  } finally {
+    clearTimeout(t);
   }
-  const foods = Array.isArray(parsed?.food_items)
-    ? parsed.food_items.join(', ')
-    : '不明';
-  const est = parsed?.estimates || {};
-  const kcal = est.calorie_kcal ?? '—';
-  const p = est.protein_g ?? '—';
-  const f = est.fat_g ?? '—';
-  const c = est.carb_g ?? '—';
-  const advice = parsed?.advice || '—';
-  return `解析結果🍽\n- 想定: ${foods}\n- 推定: ${kcal} kcal / P:${p}g F:${f}g C:${c}g\n- コメント: ${advice}`;
 }
 
 export const app = async (req, res) => {
@@ -136,33 +152,61 @@ export const app = async (req, res) => {
 
   try {
     if (ev.message?.type === 'image') {
-      if (ev.replyToken)
-        await replyLine(ev.replyToken, '画像を受け取りました🔎 解析中です…');
-
-      console.log('stage: image event received');
-      const dataUrl = await downloadImageAsDataUrl(ev.message.id);
-      console.log('stage: image downloaded');
-
-      console.log('stage: ai start');
-      let resultText = null;
-      try {
-        resultText = await summarizeMeal(dataUrl);
-        console.log('stage: ai done');
-      } catch (e) {
-        console.error('stage: ai error', e);
+      if (ev.replyToken) {
+        const replyStatus = await replyLine(
+          ev.replyToken,
+          '画像を受け取りました🔎 解析中です…',
+        );
+        console.log('reply status=', replyStatus);
       }
 
-      const text = resultText || '解析に失敗しました🙏 もう一度お試しください';
-      if (ev.source?.userId) {
-        const ok = await pushLine(ev.source.userId, text);
-        console.log('push status=', ok);
+      console.log('stage: image event received');
+      const imageBase64 = await downloadImageAsBase64(ev.message.id);
+
+      if (!openai) {
+        console.error('stage: ai skipped - no OPENAI key');
+        if (ev.source?.userId) {
+          const pushStatus = await pushLine(
+            ev.source.userId,
+            '解析に失敗しました🙏もう一度お試しください',
+          );
+          console.log('push status=', pushStatus);
+        }
+        console.log('stage: handler end');
+        return res.status(200).send('ok');
+      }
+
+      console.log('stage: summarizeMeal called');
+      let result;
+      try {
+        result = await summarizeMealFromBase64(imageBase64);
+        const msg = `🍽️ AI解析結果\n要約: ${result.summary}\n主な具材: ${result.ingredients.slice(0, 3).join('・')}`;
+        if (ev.source?.userId) {
+          const pushStatus = await pushLine(ev.source.userId, msg);
+          console.log('push status=', pushStatus);
+        }
+      } catch (e) {
+        console.log('stage: ai fallback');
+        if (ev.source?.userId) {
+          const pushStatus = await pushLine(
+            ev.source.userId,
+            '解析に失敗しました🙏もう一度お試しください',
+          );
+          console.log('push status=', pushStatus);
+        }
+      } finally {
+        console.log('stage: handler end');
       }
 
       return res.status(200).send('ok');
     }
 
     if (ev.message?.type === 'text' && ev.replyToken) {
-      await replyLine(ev.replyToken, '画像を送るとAIが要約します📷🍽');
+      const replyStatus = await replyLine(
+        ev.replyToken,
+        '画像を送るとAIが要約します📷🍽',
+      );
+      console.log('reply status=', replyStatus);
       return res.status(200).send('ok');
     }
 
@@ -171,11 +215,11 @@ export const app = async (req, res) => {
     console.error('post-handler error', e);
     try {
       if (ev?.source?.userId) {
-        const ok = await pushLine(
+        const pushStatus = await pushLine(
           ev.source.userId,
           '処理でエラーが起きました🙏 もう一度お試しください',
         );
-        console.log('push status=', ok);
+        console.log('push status=', pushStatus);
       }
     } catch (ee) {
       console.error('fallback push error', ee);
