@@ -4,6 +4,7 @@ import OpenAI from 'openai';
 const openaiApiKey = process.env.OPENAI_API_KEY;
 const openai = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
 const channelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+const channelSecret = process.env.LINE_CHANNEL_SECRET;
 
 function verifyLineSignature(req) {
   const sig =
@@ -14,7 +15,7 @@ function verifyLineSignature(req) {
     ? req.rawBody
     : Buffer.from(JSON.stringify(req.body || {}));
   const calc = crypto
-    .createHmac('sha256', process.env.LINE_CHANNEL_SECRET || '')
+    .createHmac('sha256', channelSecret || '')
     .update(raw)
     .digest('base64');
   return sig === calc;
