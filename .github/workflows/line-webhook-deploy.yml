@@ -16,12 +16,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Authenticate to Google Cloud (WIF)
+      # Auth method switched to JSON key for personal project (no organization)
+      - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          audience: https://github.com/makokoid-eng/akarilab
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SA_EMAIL }}
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
