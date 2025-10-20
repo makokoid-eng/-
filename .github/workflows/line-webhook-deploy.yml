@@ -49,6 +49,15 @@ jobs:
           gcloud config set functions/region "${REGION}"
           gcloud --version
 
+      - name: Preflight: check service account
+        run: |
+          set -euo pipefail
+          echo "PROJECT_ID=${PROJECT_ID}"
+          echo "RUNTIME_SA=${RUNTIME_SA}"
+          gcloud iam service-accounts describe "${RUNTIME_SA}" \
+            --format="value(email)" >/dev/null
+          echo "✔ Service Account exists"
+
       - name: Install dependencies (function)
         working-directory: cloud/functions/line-webhook
         run: |
