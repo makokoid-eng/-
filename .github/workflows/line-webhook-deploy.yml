@@ -51,7 +51,17 @@ jobs:
 
       - name: Install dependencies (function)
         working-directory: cloud/functions/line-webhook
-        run: npm ci
+        run: |
+          set -euo pipefail
+          echo "[ls] cloud/functions/line-webhook"
+          ls -la
+          if [ -f package-lock.json ]; then
+            echo "[npm] lockfile found → npm ci"
+            npm ci
+          else
+            echo "[npm] lockfile NOT found → npm install"
+            npm install
+          fi
 
       - name: Deploy Cloud Functions v2 (line-webhook)
         working-directory: cloud/functions/line-webhook
