@@ -16,10 +16,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     env:
-      PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-      REGION: ${{ secrets.GCP_REGION }}
-      FUNCTION_NAME: ${{ secrets.GCP_LINE_FUNCTION_NAME }}
-      RUNTIME_SA: ${{ secrets.GCP_RUNTIME_SA }}
+      PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      REGION: ${{ vars.GCP_REGION }}
+      FUNCTION_NAME: ${{ vars.GCP_LINE_FUNCTION_NAME }}
+      RUNTIME_SA: ${{ vars.GCP_RUNTIME_SA }}
       LINE_CHANNEL_SECRET: ${{ secrets.LINE_CHANNEL_SECRET }}
       LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
