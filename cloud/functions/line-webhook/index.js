@@ -233,7 +233,7 @@ async function summarizeMealFromBase64(imageBase64) {
           {
             role: 'system',
             content:
-              'あなたの出力は必ずJSON形式とし、以下のキーを含めてください:\n{\n  "summary": "...料理全体の要約...",\n  "ingredients": ["...","..."],\n  "components": [\n    {"kind": "rice", "area_px": 22000, "height_mm": 45},\n    {"kind": "salad", "area_px": 14000, "height_mm": 30},\n    {"kind": "meat", "area_px": 9000, "height_mm": 20}\n  ],\n  "scaleCandidates": [\n    {"label": "plate", "length_px": 230, "confidence": 0.8}\n  ]\n}\ncomponents は料理を構成する要素を示し、各要素に area_px (画素数) と kind を含めます。\nscaleCandidates にはスケール取得可能な物体（箸、皿、缶、名刺など）の情報を含めます。\nsummary と ingredients はこれまで通り生成してください。\nこれらのキーが存在しない場合は空配列として返してください。',
+              'あなたの出力は必ずJSON形式とし、以下のキーを含めてください:\n{\n  "summary": "...料理全体の要約...",\n  "ingredients": ["...","..."],\n  "components": [\n    {"kind": "rice", "area_px": 22000, "height_mm": 45},\n    {"kind": "salad", "area_px": 14000, "height_mm": 30},\n    {"kind": "meat", "area_px": 9000, "height_mm": 20}\n  ],\n  "scaleCandidates": [\n    {"label": "plate", "length_px": 230, "confidence": 0.8}\n  ]\n}\ncomponents は料理を構成する要素を示し、各要素に area_px (画素数) と kind を含めます。\nscaleCandidates にはスケール取得可能な物体（箸、皿、缶、名刺など）の情報を含めます。\nsummary と ingredients はこれまで通り生成してください。\nこれらのキーが存在しない場合は空配列として返すようにする。',
           },
           {
             role: 'user',
@@ -241,7 +241,7 @@ async function summarizeMealFromBase64(imageBase64) {
               {
                 type: 'text',
                 text:
-                  'この料理写真を短く要約し、主要な具材を3つ抽出し、日本語で返答。あなたの出力は必ずJSON形式とし、{"summary":"...料理全体の要約...","ingredients":["...","..."],"components":[{"kind":"rice","area_px":22000,"height_mm":45}],"scaleCandidates":[{"label":"plate","length_px":230,"confidence":0.8}]} の形式を守り、components と scaleCandidates が欠ける場合は空配列にしてください。',
+                  'この料理写真を短く要約し、主要な具材を3つ抽出し、日本語で返答。あなたの出力は必ずJSON形式とし、{"summary":"...料理全体の要約...","ingredients":["...","..."],"components":[{"kind":"rice","area_px":22000,"height_mm":45},{"kind":"salad","area_px":14000,"height_mm":30},{"kind":"meat","area_px":9000,"height_mm":20}],"scaleCandidates":[{"label":"plate","length_px":230,"confidence":0.8}]} の形式を守り、components と scaleCandidates が欠ける場合は空配列として返すようにする。',
               },
               { type: 'image_url', image_url: { url: dataUrl } },
             ],
