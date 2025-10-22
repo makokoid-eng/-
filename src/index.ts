@@ -17,6 +17,8 @@ import { estimateFromVision, type VisionEstimates } from './vision/estimate.js';
 import { estimateScale } from '../cloud/functions/line-webhook/src/estimation/v1_1/scale.js';
 // @ts-expect-error: JavaScript module without type declarations.
 import { estimateNutrition as estimateNutritionV1_1 } from '../cloud/functions/line-webhook/src/estimation/v1_1/estimate.js';
+// @ts-expect-error: JavaScript module without type declarations.
+import { normalizeKind } from './estimation/v1_1/normalizeKind.js';
 
 interface TaskPayload {
   userId: string;
@@ -240,7 +242,7 @@ app.post('/tasks/worker', express.json(), async (req: Request, res: Response) =>
         .map((component) => {
           const record = component as Record<string, unknown>;
           const kindValue = record['kind'];
-          const kind = typeof kindValue === 'string' ? kindValue : null;
+          const kind = typeof kindValue === 'string' ? normalizeKind(kindValue) : null;
           const areaPx =
             toFiniteNumber(record['area_px']) ??
             toFiniteNumber(record['areaPx']) ??
