@@ -20,33 +20,28 @@ jobs:
       REGION: ${{ vars.GCP_REGION }}
       FUNCTION_NAME: ${{ vars.GCP_LINE_FUNCTION_NAME }}
       RUNTIME_SA: ${{ vars.GCP_RUNTIME_SA }}
+      # ランタイム用の機密は Secrets（関数内では既に使用）。ここでは注入しない。
       LINE_CHANNEL_SECRET: ${{ secrets.LINE_CHANNEL_SECRET }}
       LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     steps:
-      # --- 1. Checkout ソース取得
       - name: Checkout
         uses: actions/checkout@v4
 
-      # --- 2. Node.js セットアップ
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # --- 3. gcloud CLI をセットアップ
       - name: Install gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      # --- 4. Google Cloud 認証(JSON key)
       - name: Authenticate to Google Cloud (JSON key)
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
-        # 個人PJのため Workload Identity Federation は使用しない
 
-      # --- 5. gcloud 初期化
       - name: gcloud init
         run: |
           set -euo pipefail
@@ -54,66 +49,54 @@ jobs:
           gcloud config set functions/region "${REGION}"
           gcloud --version
 
-      # --- 6. SA存在チェック
+      # --- 1) SA存在チェック ---
       - name: Preflight: check service account
         run: |
           set -euo pipefail
           echo "PROJECT_ID=${PROJECT_ID}"
           echo "RUNTIME_SA=${RUNTIME_SA}"
-          gcloud iam service-accounts describe "${RUNTIME_SA}" \
-            --format="value(email)" >/dev/null
+          gcloud iam service-accounts describe "${RUNTIME_SA}" --format="value(email)" >/dev/null
           echo "✔ Service Account exists"
 
-      # --- 7. package.json 存在チェック
+      # --- 2) ソース存在チェック（絶対パス） ---
       - name: Preflight: ensure package.json exists
-        working-directory: cloud/functions/line-webhook
         run: |
           set -euo pipefail
-          if [ ! -f package.json ]; then
-            echo "❌ package.json not found in $(pwd)" >&2
-            exit 1
-          fi
+          SOURCE="${{ github.workspace }}/cloud/functions/line-webhook"
+          echo "SOURCE=${SOURCE}"
+          test -f "${SOURCE}/package.json" || { echo "package.json not found under ${SOURCE}"; exit 1; }
           echo "✔ package.json found"
 
-      # --- 8. 依存関係インストール
+      # --- 3) 依存インストール（関数側） ---
       - name: Install dependencies (function)
         working-directory: cloud/functions/line-webhook
         run: |
           set -euo pipefail
-          echo "[ls] cloud/functions/line-webhook"
-          ls -la
           if [ -f package-lock.json ]; then
-            echo "[npm] lockfile found → npm ci"
             npm ci
           else
-            echo "[npm] lockfile NOT found → npm install"
             npm install
           fi
 
-      # --- 9. デプロイ本体
+      # --- 4) デプロイ（安定版：並列1 / 60s / sourceは絶対パス） ---
       - name: Deploy Cloud Functions v2 (line-webhook)
-        working-directory: cloud/functions/line-webhook
         run: |
           set -euo pipefail
-          echo "▶ Deploying Cloud Functions (v2)"
-          gcloud functions deploy line-webhook \
+          SOURCE="${{ github.workspace }}/cloud/functions/line-webhook"
+          gcloud functions deploy "${FUNCTION_NAME}" \
             --gen2 \
-            --region=asia-northeast1 \
+            --region="${REGION}" \
             --runtime=nodejs20 \
-            --service-account=${{ secrets.GCP_RUNTIME_SA }} \
+            --service-account="${RUNTIME_SA}" \
             --set-env-vars "FEATURE_REPLY_V1=true,FIRESTORE_ROOT=users" \
             --concurrency=1 \
             --max-instances=5 \
             --timeout=60 \
-            --source=${{ github.workspace }}/cloud/functions/line-webhook
-          echo "✅ Deploy completed"
+            --source="${SOURCE}"
 
-      # --- 10. Function URL 表示
+      # --- 5) URL表示 ---
       - name: Show function URL
         run: |
-          set -euo pipefail
-          URL=$(gcloud functions describe "${FUNCTION_NAME}" \
-            --region="${REGION}" \
-            --format="value(serviceConfig.uri)")
+          URL=$(gcloud functions describe "${FUNCTION_NAME}" --region="${REGION}" --format="value(serviceConfig.uri)")
           echo "FUNCTION_URL=${URL}"
           echo "FUNCTION_URL=${URL}" >> $GITHUB_OUTPUT
