@@ -20,7 +20,6 @@ jobs:
       REGION: ${{ vars.GCP_REGION }}
       FUNCTION_NAME: ${{ vars.GCP_LINE_FUNCTION_NAME }}
       RUNTIME_SA: ${{ vars.GCP_RUNTIME_SA }}
-      # ランタイム用の機密は Secrets（関数内では既に使用）。ここでは注入しない。
       LINE_CHANNEL_SECRET: ${{ secrets.LINE_CHANNEL_SECRET }}
       LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -42,32 +41,29 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
-      - name: gcloud init
+      - name: "gcloud init"
         run: |
           set -euo pipefail
           gcloud config set project "${PROJECT_ID}"
           gcloud config set functions/region "${REGION}"
           gcloud --version
 
-      # --- 1) SA存在チェック ---
-      - name: Preflight: check service account
+      - name: "Preflight: check service account"
         run: |
           set -euo pipefail
           echo "PROJECT_ID=${PROJECT_ID}"
           echo "RUNTIME_SA=${RUNTIME_SA}"
           gcloud iam service-accounts describe "${RUNTIME_SA}" --format="value(email)" >/dev/null
-          echo "✔ Service Account exists"
+          echo "OK: service account exists"
 
-      # --- 2) ソース存在チェック（絶対パス） ---
-      - name: Preflight: ensure package.json exists
+      - name: "Preflight: ensure package.json exists"
         run: |
           set -euo pipefail
           SOURCE="${{ github.workspace }}/cloud/functions/line-webhook"
           echo "SOURCE=${SOURCE}"
           test -f "${SOURCE}/package.json" || { echo "package.json not found under ${SOURCE}"; exit 1; }
-          echo "✔ package.json found"
+          echo "OK: package.json found"
 
-      # --- 3) 依存インストール（関数側） ---
       - name: Install dependencies (function)
         working-directory: cloud/functions/line-webhook
         run: |
@@ -78,8 +74,7 @@ jobs:
             npm install
           fi
 
-      # --- 4) デプロイ（安定版：並列1 / 60s / sourceは絶対パス） ---
-      - name: Deploy Cloud Functions v2 (line-webhook)
+      - name: "Deploy Cloud Functions v2 (line-webhook)"
         run: |
           set -euo pipefail
           SOURCE="${{ github.workspace }}/cloud/functions/line-webhook"
@@ -94,9 +89,8 @@ jobs:
             --timeout=60 \
             --source="${SOURCE}"
 
-      # --- 5) URL表示 ---
-      - name: Show function URL
+      - name: "Show function URL"
         run: |
           URL=$(gcloud functions describe "${FUNCTION_NAME}" --region="${REGION}" --format="value(serviceConfig.uri)")
           echo "FUNCTION_URL=${URL}"
-          echo "FUNCTION_URL=${URL}" >> $GITHUB_OUTPUT
+          echo "FUNCTION_URL=${URL}" >> "$GITHUB_OUTPUT"
