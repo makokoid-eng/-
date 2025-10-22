@@ -23,7 +23,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
-    :root{ --ink:#222; --sub:#667085; --border:#ececec; --brand:#16a34a; --paper:#fffaf0; }
+    :root{ --ink:#222; --sub:#667085; --border:#ececec; --brand:#166534; --paper:#fffaf0; --focus:#1d4ed8; }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{ margin:0; color:var(--ink); font-family:'Noto Sans JP',system-ui,sans-serif; line-height:1.7; background:var(--paper); position:relative; }
@@ -41,7 +41,17 @@
     .nav{display:flex; align-items:center; justify-content:space-between; padding:12px 0}
     .logo{display:flex; align-items:center; gap:10px; font-weight:700}
     .logo img{width:36px; height:36px; object-fit:contain}
-    .navlinks a{color:var(--ink); text-decoration:none; margin:0 10px; font-weight:600}
+    .navlinks{display:flex; align-items:flex-start; gap:16px; flex-wrap:wrap}
+    .navlinks>a{color:var(--ink); text-decoration:none; font-weight:600; padding:6px 0}
+    .nav-group{position:relative}
+    .nav-label{background:none; border:0; padding:6px 0; font:inherit; font-weight:600; color:var(--ink); cursor:pointer; display:inline-flex; align-items:center; gap:4px}
+    .nav-label:focus-visible{border-radius:6px}
+    .nav-label::after{content:"▾"; font-size:.7rem}
+    .nav-sub{position:absolute; top:calc(100% + 8px); left:0; margin:0; padding:10px 0; list-style:none; background:#fff; border:1px solid var(--border); border-radius:12px; min-width:200px; box-shadow:0 12px 28px rgba(15,23,42,.12); opacity:0; pointer-events:none; transform:translateY(6px); transition:opacity .18s ease, transform .18s ease; z-index:60}
+    .nav-sub li{margin:0}
+    .nav-sub a{display:block; padding:8px 18px; text-decoration:none; color:var(--ink); font-weight:600}
+    .nav-sub a:hover,.nav-sub a:focus-visible{background:#f3f4f6}
+    .nav-group:hover .nav-sub,.nav-group:focus-within .nav-sub{opacity:1; pointer-events:auto; transform:translateY(0)}
     .btn{display:inline-block; padding:10px 15px; border-radius:10px; text-decoration:none; font-weight:700; line-height:1}
     .btn.primary{background:var(--brand); color:#fff}
     .btn.ghost{border:1px solid var(--border); color:var(--ink); background:#fff}
@@ -63,11 +73,18 @@
     .hero-copy .hero-badge{display:inline-flex; align-self:flex-start; padding:6px 12px; border-radius:999px; font-size:.78rem; border:1px solid #e5f5e9; background:#f0fdf4; color:#166534; font-weight:600}
     @media (max-width:1024px){ .hero-copy .hero-badge{align-self:center} }
     .hero-actions{display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin-top:8px}
-    .hero-actions .btn.primary{font-size:1.05rem; padding:14px 22px; box-shadow:0 12px 32px rgba(22,163,74,.24)}
+    .hero-actions .btn.primary{font-size:1.05rem; padding:14px 22px; box-shadow:0 12px 32px rgba(22,101,52,.24)}
     .hero-secondary{align-self:flex-start}
-    .hero-qr{display:flex; flex-direction:column; gap:8px; align-items:center; text-align:center; background:#fff; border:1px solid rgba(22,163,74,.18); border-radius:16px; padding:14px 16px; box-shadow:0 10px 24px rgba(0,0,0,.08)}
+    .hero-qr{display:flex; flex-direction:column; gap:8px; align-items:center; text-align:center; background:#fff; border:1px solid rgba(22,101,52,.18); border-radius:16px; padding:14px 16px; box-shadow:0 10px 24px rgba(0,0,0,.08)}
     .hero-qr img{width:240px; height:240px; border-radius:12px; border:1px solid rgba(0,0,0,.08); object-fit:cover}
     .hero-qr span{font-size:.9rem; color:#166534; font-weight:600}
+    @media (max-width:720px){
+      .nav{flex-direction:column; align-items:flex-start; gap:12px}
+      .navlinks{width:100%}
+      .nav-group{width:100%}
+      .nav-sub{position:static; opacity:1; pointer-events:auto; transform:none; box-shadow:none; border:none; background:transparent; padding:6px 0 0 12px}
+      .nav-sub a{padding:6px 0}
+    }
     @media (max-width:640px){
       .hero-actions{flex-direction:column; align-items:stretch}
       .hero-qr{width:100%}
@@ -85,16 +102,19 @@
     #how .card{display:flex; flex-direction:column; gap:10px; align-items:flex-start}
     #how .card h3{margin:0; font-size:1.18rem}
     #how .card p{margin:0; color:#374151}
-    #how .card .benefit{font-weight:600; color:#16a34a}
+    #how .card .benefit{font-weight:600; color:var(--brand)}
 
     .cta-fab{position:fixed; right:16px; bottom:16px; display:flex; flex-direction:column-reverse; align-items:flex-end; gap:10px; z-index:60}
     .fab{display:inline-flex; align-items:center; justify-content:center; padding:14px 18px; border-radius:999px; font-weight:700; text-decoration:none; box-shadow:0 18px 36px rgba(0,0,0,.18); min-width:160px; transition:transform .15s ease, box-shadow .15s ease}
-    .fab-line{background:#16a34a; color:#fff}
+    .fab-line{background:var(--brand); color:#fff}
     .fab-x{background:#111827; color:#fff; font-size:.95rem; padding:12px 16px; box-shadow:0 14px 28px rgba(15,23,42,.22)}
     .fab:hover{transform:translateY(-2px)}
-    .fab:focus-visible{outline:3px solid #fff; outline-offset:3px}
+    .fab:focus-visible{outline:3px solid var(--focus); outline-offset:4px}
 
     .card{background:#fff; border:1px solid var(--border); border-radius:14px; padding:18px}
+    .card h3{margin-top:0}
+    .card h3 a{color:inherit; text-decoration:none}
+    .card h3 a:hover,.card h3 a:focus-visible{color:var(--brand)}
     ul.clean{margin:8px 0 0 1em; padding:0}
     ul.clean li{margin:.25em 0}
 
@@ -108,6 +128,11 @@
     .chip{display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid #e5e7eb; background:#fff; font-size:.85rem; margin:2px 6px 0 0}
     .muted{color:#555}
     .mt-8{margin-top:8px} .mt-12{margin-top:12px} .mt-16{margin-top:16px} .mt-24{margin-top:24px} .mt-32{margin-top:32px}
+    a:focus-visible,
+    button:focus-visible{
+      outline:3px solid var(--focus);
+      outline-offset:4px;
+    }
   </style>
 </head>
 <body>
@@ -116,21 +141,35 @@
   <header>
     <div class="container nav">
       <div class="logo">
-        <img src="/akarilab/assets/lantern.png" alt="AkarI Lab（ランタンアイコン）">
+        <img src="/akarilab/assets/lantern.png" alt="AkarI Labのロゴマーク（ランタンモチーフ）">
         <span>AkarI Lab</span>
       </div>
       <nav class="navlinks" aria-label="主要ナビゲーション">
         <a href="#about">AkarI Labとは</a>
-        <a href="#services">サービス</a>
-        <a href="#projects">プロジェクト</a>
-        <a href="#roadmap">今後の展開</a>
-        <a href="#demo">デモ</a>
-        <a href="#how">使い方</a>
+        <div class="nav-group">
+          <button type="button" class="nav-label">サービス</button>
+          <ul class="nav-sub">
+            <li><a href="#services">サービス概要</a></li>
+            <li><a href="#demo">デモ</a></li>
+            <li><a href="#how">使い方</a></li>
+          </ul>
+        </div>
+        <div class="nav-group">
+          <button type="button" class="nav-label">プロジェクト</button>
+          <ul class="nav-sub">
+            <li><a href="#projects">現在のプロジェクト</a></li>
+            <li><a href="/akarilab/projects/food.html">食習慣サポートAI</a></li>
+            <li><a href="/akarilab/projects/mood.html">モヤログ</a></li>
+            <li><a href="/akarilab/projects/cs.html">AIクレーム分析</a></li>
+            <li><a href="/akarilab/projects/learn.html">学習伴走Bot</a></li>
+            <li><a href="#roadmap">今後の展開</a></li>
+          </ul>
+        </div>
         <a href="#contact">お問い合わせ</a>
       </nav>
       <div>
-        <a class="btn ghost" href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener">X</a>
-        <a class="btn primary" href="https://line.me/R/ti/p/@227zyjps" target="_blank" rel="noopener">LINEで試す（β）</a>
+        <a class="btn ghost" href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener" aria-label="AkarI LabのX公式アカウントを新しいタブで開く">X</a>
+        <a class="btn primary" href="https://line.me/R/ti/p/@227zyjps" target="_blank" rel="noopener" aria-label="AkarI LabのLINE β版を新しいタブで開く">LINEで試す（β）</a>
       </div>
     </div>
   </header>
@@ -145,9 +184,9 @@
         私たちの提供は複数領域に広がります。食生活アプリは<strong>その一部</strong>です。
       </p>
       <div class="hero-actions">
-        <a class="btn primary" href="https://line.me/R/ti/p/@227zyjps" target="_blank" rel="noopener">LINEで試す（β）</a>
+        <a class="btn primary" href="https://line.me/R/ti/p/@227zyjps" target="_blank" rel="noopener" aria-label="AkarI LabのLINE β版を新しいタブで開く">LINEで試す（β）</a>
         <div class="hero-qr">
-          <img src="/akarilab/assets/line-qr.svg" width="240" height="240" alt="QRで友だち追加">
+          <img src="/akarilab/assets/line-qr.svg" width="240" height="240" alt="AkarI LabのLINE公式アカウントを追加するQRコード">
           <span>QRで友だち追加</span>
         </div>
       </div>
@@ -155,7 +194,7 @@
       <small class="note">※数値は目安です。医療・栄養指導の代替ではありません。</small>
     </div>
     <div class="hero-visual">
-      <img class="shot" src="/akarilab/assets/demo-chat-01.jpg" width="780" height="1126" loading="eager" decoding="async" alt="LINEチャットのデモ画面">
+      <img class="shot" src="/akarilab/assets/demo-chat-01.jpg" width="780" height="1126" loading="eager" decoding="async" alt="LINE上で食事写真を解析するAIチャットのデモ画面">
     </div>
   </section>
 
@@ -188,7 +227,7 @@
           <h3>個人向け｜食習慣サポート</h3>
           <p class="muted">写真を送るだけで要約と〈野菜・たんぱく質・kcal〉の目安を返信。週次ふり返りを予定。</p>
           <div class="mt-8">
-            <a class="btn primary" href="https://line.me/R/ti/p/@227zyjps" target="_blank" rel="noopener">βを使う</a>
+            <a class="btn primary" href="https://line.me/R/ti/p/@227zyjps" target="_blank" rel="noopener" aria-label="食習慣サポートAIのLINE β版を新しいタブで開く">βを使う</a>
           </div>
         </div>
         <div class="card">
@@ -218,7 +257,7 @@
 
       <div class="grid-3 mt-16">
         <div class="card">
-          <h3>食習慣サポートAI（β）</h3>
+          <h3><a href="/akarilab/projects/food.html">食習慣サポートAI（β）</a></h3>
           <p>撮って送るだけ。OK/修正で記録が整い、継続しやすさを最優先に設計。</p>
           <ul class="clean">
             <li>要約＋栄養目安の即時返信</li>
@@ -228,20 +267,20 @@
         </div>
 
         <div class="card">
-          <h3>モヤログ（感情ログ）</h3>
+          <h3><a href="/akarilab/projects/mood.html">モヤログ（感情ログ）</a></h3>
           <p>1分で感情を見える化 → やさしい仮説 → 1分行動。心の“整え”を日常習慣に。</p>
           <span class="chip">Designing</span>
         </div>
 
         <div class="card">
-          <h3>AIクレーム分析システム</h3>
+          <h3><a href="/akarilab/projects/cs.html">AIクレーム分析システム</a></h3>
           <p>店舗・業態別に課題抽出と改善案を自動提示。CS会議を“整った意思決定”へ。</p>
           <span class="chip">PoC</span>
         </div>
       </div>
 
       <div class="card mt-16">
-        <h3>学習伴走Bot（小4〜中3）</h3>
+        <h3><a href="/akarilab/projects/learn.html">学習伴走Bot（小4〜中3）</a></h3>
         <p>対話で“わかるまで”。戻り学習を恥ずかしくない設計で、考える力を育む。</p>
         <span class="chip">MVP準備中</span>
       </div>
@@ -272,7 +311,7 @@
         </div>
       </div>
       <p class="note mt-12">ニュース・開発ログはXやGitHubで随時発信します。</p>
-      <a class="btn ghost mt-8" href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener">進捗をXでフォロー</a>
+      <a class="btn ghost mt-8" href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener" aria-label="AkarI Labの最新情報をXで新しいタブに表示">進捗をXでフォロー</a>
     </div>
   </section>
 
@@ -284,14 +323,14 @@
       <p class="lead">写真を送信して、AIの要約と目安をワンタップで記録する流れ（開発中）。</p>
       <div class="demo-gallery">
         <figure>
-          <a href="/akarilab/assets/demo-chat-01.jpg" target="_blank" rel="noopener">
-            <img src="/akarilab/assets/demo-chat-01.jpg" width="780" height="1126" loading="lazy" decoding="async" alt="LINEで送信→解析の画面">
+          <a href="/akarilab/assets/demo-chat-01.jpg" target="_blank" rel="noopener" aria-label="送信から解析までのLINEチャット画面を新しいタブで開く">
+            <img src="/akarilab/assets/demo-chat-01.jpg" width="780" height="1126" loading="lazy" decoding="async" alt="LINEで食事写真を送信して解析する画面">
           </a>
           <figcaption>① 送信 → 解析</figcaption>
         </figure>
         <figure>
-          <a href="/akarilab/assets/demo-chat-02.jpg" target="_blank" rel="noopener">
-            <img src="/akarilab/assets/demo-chat-02.jpg" width="780" height="1110" loading="lazy" decoding="async" alt="AIが要約と栄養目安を返信">
+          <a href="/akarilab/assets/demo-chat-02.jpg" target="_blank" rel="noopener" aria-label="AIが要約と栄養目安を返信する画面を新しいタブで開く">
+            <img src="/akarilab/assets/demo-chat-02.jpg" width="780" height="1110" loading="lazy" decoding="async" alt="AIが要約と栄養の目安を返信する画面">
           </a>
           <figcaption>② 要約＋目安 → OK/修正</figcaption>
         </figure>
@@ -328,8 +367,8 @@
 
   <!-- 固定CTA -->
   <div class="cta-fab">
-    <a class="fab fab-line" href="https://line.me/R/ti/p/@227zyjps" target="_blank" rel="noopener" aria-label="LINEで試す（β）">LINEで試す</a>
-    <a class="fab fab-x" href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener" aria-label="Xで進捗をフォロー">進捗をフォロー</a>
+    <a class="fab fab-line" href="https://line.me/R/ti/p/@227zyjps" target="_blank" rel="noopener" aria-label="AkarI LabのLINE β版を新しいタブで開く">LINEで試す</a>
+    <a class="fab fab-x" href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener" aria-label="AkarI Labの最新情報をXで新しいタブに表示">進捗をフォロー</a>
   </div>
 
   <!-- ===== Contact ===== -->
@@ -359,7 +398,7 @@
         <input type="text" name="_gotcha" style="display:none">
         <label class="consent">
           <input type="checkbox" required>
-          <span><a href="/akarilab/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>に同意します</span>
+          <span><a href="/akarilab/privacy.html" target="_blank" rel="noopener" aria-label="プライバシーポリシーを新しいタブで開く">プライバシーポリシー</a>に同意します</span>
         </label>
         <div id="formStatus" class="note" aria-live="polite" style="min-height:1.2em;"></div>
         <button class="btn primary" type="submit">送信する</button>
@@ -376,7 +415,7 @@
         <span>・</span>
         <a href="/akarilab/terms.html">利用規約</a>
         <span>・</span>
-        <a href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener">X</a>
+        <a href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener" aria-label="AkarI LabのX公式アカウントを新しいタブで開く">X</a>
       </div>
     </div>
   </footer>

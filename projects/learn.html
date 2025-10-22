@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>学習伴走Bot｜AkarI Lab</title>
+  <meta name="description" content="AkarI Labの学習伴走Bot。小4〜中3の生徒に寄り添い、対話で理解を深める学習体験をデザイン。">
+  <link rel="icon" href="/akarilab/assets/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{ --ink:#222; --sub:#667085; --border:#ececec; --brand:#166534; --paper:#fffaf0; --focus:#1d4ed8; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{ margin:0; color:var(--ink); font-family:'Noto Sans JP',system-ui,sans-serif; line-height:1.7; background:var(--paper); position:relative; }
+    body::before{ content:""; position:fixed; inset:0; z-index:-1; pointer-events:none; background: linear-gradient(0deg, rgba(255,245,200,.80), rgba(255,245,200,.80)), url('/akarilab/assets/bg-lantern-illust.png') center/360px auto repeat, url('/akarilab/assets/bg-lantern.jpg') center/cover no-repeat; opacity:.38; }
+    .container{max-width:900px; margin:0 auto; padding:0 20px}
+    header{position:sticky; top:0; z-index:20; background:rgba(255,255,255,.92); backdrop-filter:blur(6px); border-bottom:1px solid var(--border)}
+    .nav{display:flex; align-items:center; justify-content:space-between; padding:12px 0}
+    .logo{display:flex; align-items:center; gap:10px; font-weight:700}
+    .logo img{width:36px; height:36px; object-fit:contain}
+    .navlinks{display:flex; align-items:flex-start; gap:16px; flex-wrap:wrap}
+    .navlinks>a{color:var(--ink); text-decoration:none; font-weight:600; padding:6px 0}
+    .nav-group{position:relative}
+    .nav-label{background:none; border:0; padding:6px 0; font:inherit; font-weight:600; color:var(--ink); cursor:pointer; display:inline-flex; align-items:center; gap:4px}
+    .nav-label:focus-visible{border-radius:6px}
+    .nav-label::after{content:"▾"; font-size:.7rem}
+    .nav-sub{position:absolute; top:calc(100% + 8px); left:0; margin:0; padding:10px 0; list-style:none; background:#fff; border:1px solid var(--border); border-radius:12px; min-width:200px; box-shadow:0 12px 28px rgba(15,23,42,.12); opacity:0; pointer-events:none; transform:translateY(6px); transition:opacity .18s ease, transform .18s ease}
+    .nav-sub li{margin:0}
+    .nav-sub a{display:block; padding:8px 18px; text-decoration:none; color:var(--ink); font-weight:600}
+    .nav-sub a:hover,.nav-sub a:focus-visible{background:#f3f4f6}
+    .nav-group:hover .nav-sub,.nav-group:focus-within .nav-sub{opacity:1; pointer-events:auto; transform:translateY(0)}
+    @media (max-width:720px){ .nav{flex-direction:column; gap:12px; align-items:flex-start} .navlinks{width:100%} .nav-group{width:100%} .nav-sub{position:static; opacity:1; pointer-events:auto; transform:none; box-shadow:none; border:none; background:transparent; padding:6px 0 0 12px} .nav-sub a{padding:6px 0} }
+    main{padding:clamp(32px,5vw,60px) 0}
+    h1{font-size:clamp(1.9rem, 2.4vw + 1rem, 2.8rem); line-height:1.3; margin:0 0 12px}
+    p.lead{font-size:1.05rem; color:#374151; margin:0 0 18px}
+    ul{margin:18px 0 24px 1.2em; padding:0}
+    ul li{margin:.4em 0}
+    .btn{display:inline-block; padding:12px 20px; border-radius:12px; text-decoration:none; font-weight:700; line-height:1}
+    .btn.primary{background:var(--brand); color:#fff; box-shadow:0 12px 28px rgba(22,101,52,.22)}
+    .btn.ghost{border:1px solid var(--border); background:#fff; color:var(--ink)}
+    .page-card{background:#fff; border:1px solid var(--border); border-radius:18px; padding:32px; box-shadow:0 16px 38px rgba(15,23,42,.12)}
+    .page-meta{display:flex; gap:24px; flex-wrap:wrap; margin:24px 0 0}
+    .badge{display:inline-flex; align-items:center; gap:6px; font-size:.9rem; padding:6px 12px; border-radius:999px; border:1px solid rgba(22,101,52,.25); background:#dcfce7; color:#166534; font-weight:600}
+    footer{background:#fafafa; border-top:1px solid var(--border); padding:22px 0; color:#555; font-size:.92rem}
+    .footer-line{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap}
+    .footer-line a{color:inherit}
+    a:focus-visible,
+    button:focus-visible{
+      outline:3px solid var(--focus);
+      outline-offset:4px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="logo">
+        <img src="/akarilab/assets/lantern.png" alt="AkarI Labのロゴマーク（ランタンモチーフ）">
+        <span>AkarI Lab</span>
+      </div>
+      <nav class="navlinks" aria-label="主要ナビゲーション">
+        <a href="/akarilab/index.html#about">AkarI Labとは</a>
+        <div class="nav-group">
+          <button type="button" class="nav-label">サービス</button>
+          <ul class="nav-sub">
+            <li><a href="/akarilab/index.html#services">サービス概要</a></li>
+            <li><a href="/akarilab/index.html#demo">デモ</a></li>
+            <li><a href="/akarilab/index.html#how">使い方</a></li>
+          </ul>
+        </div>
+        <div class="nav-group">
+          <button type="button" class="nav-label">プロジェクト</button>
+          <ul class="nav-sub">
+            <li><a href="/akarilab/index.html#projects">現在のプロジェクト</a></li>
+            <li><a href="/akarilab/projects/food.html">食習慣サポートAI</a></li>
+            <li><a href="/akarilab/projects/mood.html">モヤログ</a></li>
+            <li><a href="/akarilab/projects/cs.html">AIクレーム分析</a></li>
+            <li><a href="/akarilab/projects/learn.html">学習伴走Bot</a></li>
+            <li><a href="/akarilab/index.html#roadmap">今後の展開</a></li>
+          </ul>
+        </div>
+        <a href="/akarilab/index.html#contact">お問い合わせ</a>
+      </nav>
+      <div>
+        <a class="btn ghost" href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener" aria-label="AkarI LabのX公式アカウントを新しいタブで開く">X</a>
+        <a class="btn primary" href="https://line.me/R/ti/p/@227zyjps" target="_blank" rel="noopener" aria-label="AkarI LabのLINE β版を新しいタブで開く">LINEで試す（β）</a>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div class="container page-card">
+      <span class="badge">MVP準備中</span>
+      <h1>学習伴走Bot</h1>
+      <p class="lead">小学4年〜中学3年の「分かった！」を引き出す伴走AI。段階的なヒントと対話で、戻り学習も恥ずかしくない体験に。</p>
+      <ul>
+        <li>理解度に応じたステップヒントと類題で「考える力」を育成</li>
+        <li>家庭学習の進捗を保護者向けに要約、声かけの提案までサポート</li>
+        <li>学校・塾の教材に合わせたカスタムカリキュラムを提供予定</li>
+      </ul>
+      <div class="page-meta">
+        <a class="btn primary" href="/akarilab/index.html#contact">トライアルの相談</a>
+        <a class="btn ghost" href="https://x.com/waveblasttaiyo" target="_blank" rel="noopener" aria-label="AkarI Labの開発状況をXで新しいタブに表示">開発状況をチェック</a>
+      </div>
+    </div>
+  </main>
+  <footer>
+    <div class="container footer-line">
+      <span>© AkarI Lab</span>
+      <div>
+        <a href="/akarilab/privacy.html">プライバシーポリシー</a> ｜
+        <a href="/akarilab/terms.html">利用規約</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
