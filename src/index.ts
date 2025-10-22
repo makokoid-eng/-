@@ -6,6 +6,7 @@ import { runAiPipeline } from './ai.js';
 import { logDone, logError, logQueued } from './store.js';
 import { appendRow } from './sheets_legacy.js';
 import { getSenderId, getSourceKind } from './line-source.js';
+import { handleTextCommand } from './text-commands.js';
 
 interface TaskPayload {
   userId: string;
@@ -44,12 +45,27 @@ app.post('/line/webhook', middleware(lineConfig), async (req: Request, res: Resp
         }
 
         const replyToken = event.replyToken;
+
+        if (!replyToken) {
+          console.warn('Missing replyToken for event', { source: event.source });
+          return;
+        }
+
+        if (event.message.type === 'text') {
+          const handled = await handleTextCommand(event, async (token, message) => {
+            const messages = Array.isArray(message) ? message : [message];
+            await lineClient.replyMessage(token, messages);
+          });
+          if (handled) {
+            return;
+          }
+        }
+
         const senderId = getSenderId(event.source);
         const sourceKind = getSourceKind(event.source);
 
-        if (!replyToken || !senderId) {
-          console.warn('Missing replyToken or senderId for event', {
-            hasReplyToken: Boolean(replyToken),
+        if (!senderId) {
+          console.warn('Missing senderId for event', {
             sourceKind,
             source: event.source
           });

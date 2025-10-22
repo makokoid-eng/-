@@ -1,6 +1,6 @@
-import { getApps, initializeApp } from 'firebase-admin/app';
-import { FieldValue, Firestore, getFirestore } from 'firebase-admin/firestore';
+import { FieldValue } from 'firebase-admin/firestore';
 
+import { getDb } from './firebase-admin.js';
 import type { SourceKind } from './line-source.js';
 
 interface LogQueuedInput {
@@ -15,13 +15,7 @@ interface LogDoneExtra {
   latencyMs?: number;
 }
 
-if (!getApps().length) {
-  initializeApp({
-    projectId: process.env.GCP_PROJECT_ID
-  });
-}
-
-const db: Firestore = getFirestore();
+const db = getDb();
 const collection = db.collection('lineLogs');
 
 export async function logQueued(input: LogQueuedInput): Promise<string> {
