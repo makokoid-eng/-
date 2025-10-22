@@ -6,6 +6,7 @@
   "type": "module",
   "engines": { "node": ">=20" },
   "dependencies": {
-    "openai": "^4.67.3"
+    "openai": "^4.0.0",
+    "axios": "^1.7.0"
   }
 }

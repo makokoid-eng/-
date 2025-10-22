@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import axios from 'axios';
 import OpenAI from 'openai';
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
@@ -27,50 +28,55 @@ function verifyLineSignature(req) {
 async function replyLine(replyToken, text) {
   if (!channelAccessToken) throw new Error('LINE_CHANNEL_ACCESS_TOKEN is not set');
 
-  const resp = await fetch('https://api.line.me/v2/bot/message/reply', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${channelAccessToken}`,
-    },
-    body: JSON.stringify({
+  const resp = await axios.post(
+    'https://api.line.me/v2/bot/message/reply',
+    {
       replyToken,
       messages: [{ type: 'text', text }],
-    }),
-  });
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${channelAccessToken}`,
+      },
+    },
+  );
   return resp.status;
 }
 
 async function pushLine(to, text) {
   if (!channelAccessToken) throw new Error('LINE_CHANNEL_ACCESS_TOKEN is not set');
 
-  const resp = await fetch('https://api.line.me/v2/bot/message/push', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${channelAccessToken}`,
-    },
-    body: JSON.stringify({
+  const resp = await axios.post(
+    'https://api.line.me/v2/bot/message/push',
+    {
       to,
       messages: [{ type: 'text', text }],
-    }),
-  });
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${channelAccessToken}`,
+      },
+    },
+  );
   return resp.status;
 }
 
 async function downloadImageAsBase64(messageId) {
   if (!channelAccessToken) throw new Error('LINE_CHANNEL_ACCESS_TOKEN is not set');
 
-  const r = await fetch(
+  const r = await axios.get(
     `https://api-data.line.me/v2/bot/message/${messageId}/content`,
     {
       headers: {
         Authorization: `Bearer ${channelAccessToken}`,
       },
+      responseType: 'arraybuffer',
     },
   );
-  if (!r.ok) throw new Error(`LINE content ${r.status}`);
-  const buf = Buffer.from(await r.arrayBuffer());
+  if (r.status !== 200) throw new Error(`LINE content ${r.status}`);
+  const buf = Buffer.from(r.data);
   console.log('stage: image downloaded');
   const base64 = buf.toString('base64');
   console.log('stage: image to base64 length=', base64?.length || 0);
