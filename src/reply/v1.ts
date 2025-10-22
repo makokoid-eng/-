@@ -147,6 +147,25 @@ function formatEstimatesBlock(estimates: MealResult['estimates']): string | null
     lines.push(confidenceText);
   }
 
+  const scaleRecord = isRecord(estimates.scale) ? estimates.scale : null;
+  if (scaleRecord) {
+    const sourceRaw = scaleRecord.source;
+    const source = typeof sourceRaw === 'string' && sourceRaw.trim().length > 0
+      ? sourceRaw.trim()
+      : null;
+    const objectSizeValue = (scaleRecord as Record<string, unknown>)['object_size_mm'];
+    const objectSize =
+      typeof objectSizeValue === 'number' && Number.isFinite(objectSizeValue)
+        ? `${Math.round(objectSizeValue)}mm`
+        : null;
+    const scaleParts = [source, objectSize].filter(
+      (part): part is string => typeof part === 'string' && part.length > 0
+    );
+    if (scaleParts.length > 0) {
+      lines.push(`基準: ${scaleParts.join(' / ')}`);
+    }
+  }
+
   if (parts.length > 0 || confidenceText) {
     lines.push('※±20% 程度の誤差があります');
   }

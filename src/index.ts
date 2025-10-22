@@ -12,7 +12,11 @@ import { saveMealResult, type MealResult } from './meals.js';
 import { formatReplyV1 } from './reply/v1.js';
 import { legacyFormatReply } from './reply/legacy.js';
 import { inferTags as inferReplyTags } from './reply/tagsV1.js';
-import { estimateFromVision } from './vision/estimate.js';
+import { estimateFromVision, type VisionEstimates } from './vision/estimate.js';
+// @ts-expect-error: JavaScript module without type declarations.
+import { estimateScale } from '../cloud/functions/line-webhook/src/estimation/v1_1/scale.js';
+// @ts-expect-error: JavaScript module without type declarations.
+import { estimateNutrition as estimateNutritionV1_1 } from '../cloud/functions/line-webhook/src/estimation/v1_1/estimate.js';
 
 interface TaskPayload {
   userId: string;
@@ -24,6 +28,11 @@ interface TaskPayload {
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const toFiniteNumber = (value: unknown): number | null => {
+  const num = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(num) ? num : null;
+};
 
 const lineConfig: MiddlewareConfig = {
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN ?? '',
@@ -193,9 +202,102 @@ app.post('/tasks/worker', express.json(), async (req: Request, res: Response) =>
       payload.type === 'image' && isPlainObject(rawMeta)
         ? (rawMeta as Record<string, unknown>).vision ?? rawMeta
         : null;
-    const visionEstimates = payload.type === 'image'
-      ? estimateFromVision(visionSource ?? null)
-      : null;
+    const visionRecord =
+      payload.type === 'image' && isPlainObject(visionSource)
+        ? (visionSource as Record<string, unknown>)
+        : null;
+
+    let visionEstimates: VisionEstimates | null = null;
+
+    if (visionRecord) {
+      console.log('v1.1 start: image handler');
+      console.log('v1.1 vision keys:', Object.keys(visionRecord));
+
+      const scaleCandidatesSource = (visionRecord as Record<string, unknown>)[
+        'scaleCandidates'
+      ];
+      const scaleCandidates = Array.isArray(scaleCandidatesSource)
+        ? scaleCandidatesSource
+        : [];
+      console.log('v1.1 scaleCandidates.len=', scaleCandidates.length);
+
+      const componentsSource = (visionRecord as Record<string, unknown>)[
+        'components'
+      ];
+      const componentSource = Array.isArray(componentsSource)
+        ? componentsSource
+        : [];
+      console.log('v1.1 components.len=', componentSource.length);
+
+      const scaleRaw = estimateScale(scaleCandidates) as Record<string, unknown> | null;
+      const pxPerMmRaw =
+        toFiniteNumber(scaleRaw ? scaleRaw['px_per_mm'] : null) ??
+        toFiniteNumber(scaleRaw ? scaleRaw['pxPerMm'] : null);
+      const pxPerMm = Math.max(pxPerMmRaw ?? 0, 0) || 1.0;
+
+      const componentsMm = componentSource
+        .filter((component): component is Record<string, unknown> => isPlainObject(component))
+        .map((component) => {
+          const record = component as Record<string, unknown>;
+          const kindValue = record['kind'];
+          const kind = typeof kindValue === 'string' ? kindValue : null;
+          const areaPx =
+            toFiniteNumber(record['area_px']) ??
+            toFiniteNumber(record['areaPx']) ??
+            toFiniteNumber(record['area']);
+          const heightMm =
+            toFiniteNumber(record['height_mm']) ??
+            toFiniteNumber(record['heightMm']);
+
+          if (!kind) {
+            return null;
+          }
+
+          const areaMm2 = Math.max(0, areaPx ? areaPx / (pxPerMm * pxPerMm) : 0);
+
+          return {
+            kind,
+            area_mm2: areaMm2,
+            ...(heightMm !== null ? { height_mm: heightMm } : {})
+          };
+        })
+        .filter((component): component is { kind: string; area_mm2: number; height_mm?: number } => component !== null);
+
+      const nutritionRaw = estimateNutritionV1_1(componentsMm) as Record<string, unknown>;
+
+      const scaleSourceRaw = scaleRaw ? scaleRaw['source'] : null;
+      const scaleInfo = {
+        source: typeof scaleSourceRaw === 'string' ? scaleSourceRaw : null,
+        object_size_mm: toFiniteNumber(scaleRaw ? scaleRaw['object_size_mm'] : null),
+        pixels: toFiniteNumber(scaleRaw ? scaleRaw['pixels'] : null),
+        px_per_mm: pxPerMm,
+        pxPerMm
+      };
+
+      const assumptions = {
+        salad_height_mm: 30,
+        rice_height_mm: 45,
+        meat_height_mm: 18
+      };
+
+      const enrichedEstimates = {
+        vegetables_g: toFiniteNumber(nutritionRaw.vegetables_g),
+        protein_g: toFiniteNumber(nutritionRaw.protein_g),
+        calories_kcal: toFiniteNumber(nutritionRaw.calories_kcal),
+        fiber_g: toFiniteNumber(nutritionRaw.fiber_g),
+        confidence: toFiniteNumber(nutritionRaw.confidence),
+        scale: scaleInfo,
+        assumptions
+      };
+
+      visionEstimates = enrichedEstimates as unknown as VisionEstimates;
+      console.log('v1.1 estimates:', visionEstimates);
+    }
+
+    if (!visionEstimates) {
+      visionEstimates =
+        payload.type === 'image' ? estimateFromVision(visionSource ?? null) : null;
+    }
 
     if (visionEstimates) {
       console.log('vision estimates summary', {
@@ -220,7 +322,8 @@ app.post('/tasks/worker', express.json(), async (req: Request, res: Response) =>
     if (!meal.tags?.length && meal.ingredients?.length) {
       meal.tags = inferReplyTags(meal.ingredients);
     }
-    meal.meta = { ...(meal.meta ?? {}), version: useV1 ? 'v1.1' : 'v1' };
+    const version = visionEstimates ? 'v1.1' : 'v1';
+    meal.meta = { ...(meal.meta ?? {}), version };
 
     const localTimeHHmm = jstFormatter.format(new Date());
     const messageText = useV1
