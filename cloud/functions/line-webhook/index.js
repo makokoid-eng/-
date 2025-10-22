@@ -18,6 +18,10 @@ const openai = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
 const channelAccessToken = process.env.LINE_CHANNEL_ACCESS_TOKEN;
 const channelSecret = process.env.LINE_CHANNEL_SECRET;
 
+function getSenderId(source) {
+  return source?.userId || source?.groupId || source?.roomId || null;
+}
+
 function verifyLineSignature(req) {
   const sig =
     (typeof req.get === 'function'
@@ -222,17 +226,36 @@ const app = async (req, res) => {
   try {
     const isText = ev?.type === 'message' && ev?.message?.type === 'text';
     const text = (ev?.message?.text || '').trim().toLowerCase();
-    const userId = ev.source?.userId;
     const replyToken = ev.replyToken;
+    const senderId = getSenderId(ev?.source);
+
+    console.log(
+      'stage: senderId =',
+      senderId,
+      'userId=',
+      ev?.source?.userId,
+      'groupId=',
+      ev?.source?.groupId,
+      'roomId=',
+      ev?.source?.roomId,
+    );
 
     if (isText) {
       console.log('stage: text event received =', text);
       if (text.replace(/\s+/g, '') === 'pingsave') {
-        if (userId) {
-          await canarySave(userId);
-        } else {
-          console.warn('stage: firestore canary skipped - userId missing');
+        if (!senderId) {
+          console.warn('stage: firestore skip - senderId missing');
+          if (replyToken) {
+            const replyStatus = await replyLine(
+              replyToken,
+              '⚠️ senderId が取得できませんでした',
+            );
+            console.log('reply status=', replyStatus);
+          }
+          return res.sendStatus(200);
         }
+
+        await canarySave(senderId);
         if (replyToken) {
           const replyStatus = await replyLine(replyToken, '✅保存テストOK');
           console.log('reply status=', replyStatus);
@@ -255,9 +278,9 @@ const app = async (req, res) => {
 
       if (!openai) {
         console.error('stage: ai skipped - no OPENAI key');
-        if (ev.source?.userId) {
+        if (senderId) {
           const pushStatus = await pushLine(
-            ev.source.userId,
+            senderId,
             '解析に失敗しました🙏もう一度お試しください',
           );
           console.log('push status=', pushStatus);
@@ -270,10 +293,12 @@ const app = async (req, res) => {
       let result;
       try {
         result = await summarizeMealFromBase64(imageBase64);
-        if (ev.source?.userId) {
+        if (!senderId) {
+          console.warn('stage: firestore skip - senderId missing');
+        } else {
           console.log('stage: before saveMealResult');
           await saveMealResult({
-            userId: ev.source.userId,
+            userId: senderId,
             imageBytes: imageBase64?.length || 0,
             result,
             meta: { source: 'line-image', version: 1 },
@@ -281,15 +306,15 @@ const app = async (req, res) => {
           console.log('stage: after saveMealResult');
         }
         const msg = `🍽️ AI解析結果\n要約: ${result.summary}\n主な具材: ${result.ingredients.slice(0, 3).join('・')}`;
-        if (ev.source?.userId) {
-          const pushStatus = await pushLine(ev.source.userId, msg);
+        if (senderId) {
+          const pushStatus = await pushLine(senderId, msg);
           console.log('push status=', pushStatus);
         }
       } catch (e) {
         console.log('stage: ai fallback');
-        if (ev.source?.userId) {
+        if (senderId) {
           const pushStatus = await pushLine(
-            ev.source.userId,
+            senderId,
             '解析に失敗しました🙏もう一度お試しください',
           );
           console.log('push status=', pushStatus);
@@ -314,9 +339,10 @@ const app = async (req, res) => {
   } catch (e) {
     console.error('post-handler error', e);
     try {
-      if (ev?.source?.userId) {
+      const senderId = getSenderId(ev?.source);
+      if (senderId) {
         const pushStatus = await pushLine(
-          ev.source.userId,
+          senderId,
           '処理でエラーが起きました🙏 もう一度お試しください',
         );
         console.log('push status=', pushStatus);
