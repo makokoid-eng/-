@@ -92,6 +92,7 @@ async function downloadImageAsBase64(messageId) {
 }
 
 async function saveMealResult({ userId, imageBytes, result, meta }) {
+  console.log('stage: firestore start');
   try {
     const ts = new Date().toISOString().replace(/[:.]/g, '');
     const docRef = db
@@ -101,12 +102,11 @@ async function saveMealResult({ userId, imageBytes, result, meta }) {
       .doc(ts);
 
     const payload = {
-      summary: result?.summary ?? null,
+      summary: result?.summary ?? '(no summary)',
       ingredients: Array.isArray(result?.ingredients) ? result.ingredients : [],
       imageBytes: typeof imageBytes === 'number' ? imageBytes : null, // 画像本体は保存しない
-      model: 'gpt-4o-mini',
       createdAt: FieldValue.serverTimestamp(),
-      ...meta,
+      meta: meta || {},
     };
 
     await docRef.set(payload, { merge: false });
