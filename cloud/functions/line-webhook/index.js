@@ -271,12 +271,14 @@ const app = async (req, res) => {
       try {
         result = await summarizeMealFromBase64(imageBase64);
         if (ev.source?.userId) {
+          console.log('stage: before saveMealResult');
           await saveMealResult({
             userId: ev.source.userId,
             imageBytes: imageBase64?.length || 0,
             result,
             meta: { source: 'line-image', version: 1 },
           });
+          console.log('stage: after saveMealResult');
         }
         const msg = `🍽️ AI解析結果\n要約: ${result.summary}\n主な具材: ${result.ingredients.slice(0, 3).join('・')}`;
         if (ev.source?.userId) {
