@@ -265,7 +265,55 @@ app.post('/tasks/worker', express.json(), async (req: Request, res: Response) =>
         })
         .filter((component): component is { kind: string; area_mm2: number; height_mm?: number } => component !== null);
 
-      const nutritionRaw = estimateNutritionV1_1(componentsMm) as Record<string, unknown>;
+      const hasComponents = componentsMm.length > 0;
+      const allAreasZero = hasComponents
+        ? componentsMm.every((component) => (component.area_mm2 ?? 0) <= 0)
+        : true;
+
+      let nutritionRaw: Record<string, unknown>;
+      let fallbackUsed = false;
+
+      if (!hasComponents || allAreasZero) {
+        fallbackUsed = true;
+        const ingredientsText = normalizedIngredients.join(' ');
+        const fallbackComponents: { kind: string; area_mm2: number; height_mm: number }[] = [];
+        if (/サラダ|野菜/.test(ingredientsText)) {
+          fallbackComponents.push({ kind: 'salad', area_mm2: 20000, height_mm: 30 });
+        }
+        if (/ご飯|米|おにぎり|麺|そうめん|そば|うどん/.test(ingredientsText)) {
+          fallbackComponents.push({ kind: 'rice', area_mm2: 25000, height_mm: 45 });
+        }
+        if (/卵|肉|鶏|豚|牛|魚|貝/.test(ingredientsText)) {
+          const kind = /卵/.test(ingredientsText)
+            ? 'tofu'
+            : /魚|貝/.test(ingredientsText)
+              ? 'fish'
+              : 'meat';
+          fallbackComponents.push({ kind, area_mm2: 12000, height_mm: 18 });
+        }
+
+        const fallbackBase = fallbackComponents.length
+          ? (estimateNutritionV1_1(fallbackComponents) as Record<string, unknown>)
+          : {
+              vegetables_g: 0,
+              protein_g: 0,
+              calories_kcal: 0,
+              fiber_g: 0,
+              confidence: 0.4
+            };
+
+        const resolvedConfidence = toFiniteNumber(fallbackBase.confidence);
+        nutritionRaw = {
+          ...fallbackBase,
+          confidence: resolvedConfidence !== null ? resolvedConfidence : 0.4
+        };
+
+        console.log(
+          `v1.1 fallback from ingredients: components.len=${componentSource.length}, fallback.used=true`
+        );
+      } else {
+        nutritionRaw = estimateNutritionV1_1(componentsMm) as Record<string, unknown>;
+      }
 
       const scaleSourceRaw = scaleRaw ? scaleRaw['source'] : null;
       const scaleInfo = {
@@ -276,11 +324,18 @@ app.post('/tasks/worker', express.json(), async (req: Request, res: Response) =>
         pxPerMm
       };
 
-      const assumptions = {
+      const assumptions: Record<string, unknown> = {
         salad_height_mm: 30,
         rice_height_mm: 45,
         meat_height_mm: 18
       };
+
+      if (fallbackUsed) {
+        assumptions.fallback_from_ingredients = true;
+        if (normalizedIngredients.length) {
+          assumptions.fallback_ingredients = normalizedIngredients;
+        }
+      }
 
       const enrichedEstimates = {
         vegetables_g: toFiniteNumber(nutritionRaw.vegetables_g),
