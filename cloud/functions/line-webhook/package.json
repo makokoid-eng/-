@@ -2,8 +2,8 @@
   "name": "line-webhook",
   "version": "1.0.0",
   "description": "Minimal LINE webhook HTTP function",
-  "main": "index.js",
   "type": "module",
+  "main": "index.js",
   "engines": { "node": ">=20" },
   "dependencies": {
     "openai": "^4.0.0",
