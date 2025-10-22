@@ -1,5 +1,12 @@
 import type { MealResult } from '../meals.js';
 
+type GoalAdviceFn = (options: { category?: unknown; mode?: unknown }) => string | null;
+
+// @ts-expect-error: JavaScript module without type declarations.
+import { getGoalAdviceLine as getGoalAdviceLineUnsafe } from './advice.js';
+
+const getGoalAdviceLine = getGoalAdviceLineUnsafe as GoalAdviceFn;
+
 function formatIngredients(ingredients: readonly string[] | null | undefined): string | null {
   if (!Array.isArray(ingredients)) {
     return null;
@@ -67,6 +74,38 @@ const formatDecimal = (value: number | null | undefined, digits = 1): string | n
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(digits);
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const extractGoalCategory = (meta: unknown): string | null => {
+  if (!isRecord(meta)) {
+    return null;
+  }
+
+  const profile = meta.profile;
+  if (!isRecord(profile)) {
+    return null;
+  }
+
+  const goal = profile.goal;
+  if (!isRecord(goal)) {
+    return null;
+  }
+
+  const category = goal.category;
+  const trimmed = typeof category === 'string' ? category.trim() : '';
+  return trimmed || null;
+};
+
+const extractMode = (meta: unknown): string | null => {
+  if (!isRecord(meta)) {
+    return null;
+  }
+
+  const mode = meta.mode;
+  return typeof mode === 'string' && mode.trim() ? mode : null;
+};
+
 function formatEstimatesBlock(estimates: MealResult['estimates']): string | null {
   if (!estimates) {
     return null;
@@ -127,20 +166,48 @@ export function formatReplyV1(meal: MealResult | null | undefined, localTimeHHmm
     (line): line is string => typeof line === 'string' && line.length > 0
   );
 
+  const meta = meal?.meta ?? null;
+  const goalCategory = extractGoalCategory(meta);
+  const mode = extractMode(meta);
+  const adviceLine = getGoalAdviceLine({
+    category: goalCategory ?? undefined,
+    mode: mode ?? undefined
+  });
+
   const estimatesBlock = formatEstimatesBlock(meal?.estimates ?? null);
 
   if (body.length === 0) {
+    const lines = [header];
+    if (adviceLine) {
+      lines.push('', adviceLine);
+    }
+
     if (!estimatesBlock) {
+      if (adviceLine) {
+        lines.push('', '解析結果を取得できませんでした。');
+        return lines.join('\n');
+      }
+
       return `${header}\n解析結果を取得できませんでした。`;
     }
 
-    const lines = [header];
-    lines.push('');
+    if (!adviceLine) {
+      lines.push('');
+    }
     lines.push(estimatesBlock);
     return lines.join('\n');
   }
 
-  const lines = [header, '', ...body];
+  const lines = [header, ''];
+
+  if (adviceLine) {
+    lines.push(adviceLine);
+    if (body.length > 0) {
+      lines.push('');
+    }
+  }
+
+  lines.push(...body);
 
   if (estimatesBlock) {
     if (lines[lines.length - 1] !== '') {
