@@ -105,11 +105,12 @@ async function saveMealResult({ userId, imageBytes, result, meta }) {
       summary: result?.summary ?? '(no summary)',
       ingredients: Array.isArray(result?.ingredients) ? result.ingredients : [],
       imageBytes: typeof imageBytes === 'number' ? imageBytes : null, // 画像本体は保存しない
+      model: 'gpt-4o-mini',
       createdAt: FieldValue.serverTimestamp(),
       meta: meta || {},
     };
 
-    await docRef.set(payload, { merge: false });
+    await docRef.set(payload);
     console.log('stage: firestore saved', docRef.path);
   } catch (e) {
     console.error('stage: firestore error', e?.message || e);
