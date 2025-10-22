@@ -86,21 +86,16 @@ jobs:
         working-directory: cloud/functions/line-webhook
         run: |
           set -euo pipefail
-          gcloud functions deploy "${FUNCTION_NAME}" \
-            --gen2 \
-            --runtime=nodejs20 \
-            --region="${REGION}" \
-            --entry-point=app \
-            --trigger-http \
-            --allow-unauthenticated \
-            --service-account="${RUNTIME_SA}" \
-            --set-env-vars="LINE_CHANNEL_SECRET=${LINE_CHANNEL_SECRET},LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN},OPENAI_API_KEY=${OPENAI_API_KEY},FEATURE_REPLY_V1=true,FIRESTORE_ROOT=users" \
-            --cpu=1 \
-            --memory=512Mi \
-            --concurrency=10 \
-            --max-instances=5 \
-            --timeout=60 \
-            --source="${{ github.workspace }}/cloud/functions/line-webhook"
+         gcloud functions deploy line-webhook \
+  --gen2 \
+  --region=asia-northeast1 \
+  --runtime=nodejs20 \
+  --service-account=${{ secrets.GCP_RUNTIME_SA }} \
+  --set-env-vars "FEATURE_REPLY_V1=true,FIRESTORE_ROOT=users" \
+  --concurrency=1 \
+  --max-instances=5 \
+  --timeout=60 \
+  --source=${{ github.workspace }}/cloud/functions/line-webhook
 
       - name: Show function URL
         run: |
