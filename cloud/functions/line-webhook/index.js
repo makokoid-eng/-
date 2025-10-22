@@ -382,12 +382,26 @@ const app = async (req, res) => {
 
         try {
           const scale = estimateScale(scaleCandidates);
-          const pxmm = Math.max(scale?.px_per_mm || 0, 0) || 1.0;
-          const componentsMm = components.map((c) => ({
-            kind: c?.kind,
-            area_mm2: (Number(c?.area_px) || 0) / (pxmm * pxmm),
-            height_mm: c?.height_mm,
-          }));
+          const rawPxmm = Number(scale?.px_per_mm);
+          let pxmm =
+            Number.isFinite(rawPxmm) && rawPxmm !== 0 ? rawPxmm : 3.0;
+          pxmm = Math.min(Math.max(pxmm, 0.8), 10);
+          console.log('v1.1 px_per_mm=', pxmm);
+          const componentsMm = components
+            .map((c) => {
+              const areaPx = Number(c?.area_px);
+              const areaMm2 = Number.isFinite(areaPx)
+                ? areaPx / (pxmm * pxmm)
+                : NaN;
+              return {
+                kind: c?.kind,
+                area_mm2: areaMm2,
+                height_mm: c?.height_mm,
+              };
+            })
+            .filter(
+              (c) => Number.isFinite(c.area_mm2) && c.area_mm2 >= 0,
+            );
           const nutrition = estimateNutrition(componentsMm);
           if (nutrition && typeof nutrition === 'object') {
             nutrition.scale = {
