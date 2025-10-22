@@ -212,22 +212,33 @@ const app = async (req, res) => {
   const ev = body?.events?.[0];
   if (!ev) return res.status(200).send('ok');
 
-  try {
-    const isText = ev.message?.type === 'text';
-    const text = isText ? ev.message?.text || '' : '';
-    const userId = ev.source?.userId;
+  console.log(
+    'stage: event',
+    'type=', ev?.type,
+    'msgType=', ev?.message?.type,
+    'text=', ev?.message?.text,
+  );
 
-    if (isText && /ping save/i.test(text)) {
-      if (userId) {
-        await canarySave(userId);
-      } else {
-        console.warn('stage: firestore canary skipped - userId missing');
+  try {
+    const isText = ev?.type === 'message' && ev?.message?.type === 'text';
+    const text = (ev?.message?.text || '').trim().toLowerCase();
+    const userId = ev.source?.userId;
+    const replyToken = ev.replyToken;
+
+    if (isText) {
+      console.log('stage: text event received =', text);
+      if (text.replace(/\s+/g, '') === 'pingsave') {
+        if (userId) {
+          await canarySave(userId);
+        } else {
+          console.warn('stage: firestore canary skipped - userId missing');
+        }
+        if (replyToken) {
+          const replyStatus = await replyLine(replyToken, '✅保存テストOK');
+          console.log('reply status=', replyStatus);
+        }
+        return res.sendStatus(200);
       }
-      if (ev.replyToken) {
-        const replyStatus = await replyLine(ev.replyToken, '✅保存テストOK');
-        console.log('reply status=', replyStatus);
-      }
-      return res.sendStatus(200);
     }
 
     if (ev.message?.type === 'image') {
@@ -288,9 +299,9 @@ const app = async (req, res) => {
       return res.status(200).send('ok');
     }
 
-    if (ev.message?.type === 'text' && ev.replyToken) {
+    if (isText && replyToken) {
       const replyStatus = await replyLine(
-        ev.replyToken,
+        replyToken,
         '画像を送るとAIが要約します📷🍽',
       );
       console.log('reply status=', replyStatus);
