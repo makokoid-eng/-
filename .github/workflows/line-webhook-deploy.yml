@@ -85,7 +85,7 @@ jobs:
             --allow-unauthenticated \
             --service-account="${RUNTIME_SA}" \
             --set-env-vars="LINE_CHANNEL_SECRET=${LINE_CHANNEL_SECRET},LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN},OPENAI_API_KEY=${OPENAI_API_KEY},FEATURE_REPLY_V1=true,FIRESTORE_ROOT=users" \
-            --max-concurrency=10 \
+            --concurrency=10 \
             --max-instances=5 \
             --timeout=60 \
             --source=cloud/functions/line-webhook
