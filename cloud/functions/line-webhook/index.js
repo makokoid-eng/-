@@ -231,11 +231,16 @@ async function summarizeMealFromBase64(imageBase64) {
         model: 'gpt-4o-mini',
         messages: [
           {
+            role: 'system',
+            content:
+              'あなたの出力は必ず JSON オブジェクト形式とし、以下のキーを含めてください:\n{\n  "summary": "...",\n  "ingredients": ["...", "..."],\n  "components": [\n    {"kind": "rice", "area_px": 23000, "height_mm": 40},\n    {"kind": "salad", "area_px": 15000, "height_mm": 30},\n    {"kind": "meat", "area_px": 10000, "height_mm": 20}\n  ],\n  "scaleCandidates": [\n    {"label": "plate", "length_px": 220, "confidence": 0.8}\n  ]\n}\ncomponents の各要素は料理ごとの領域種別（rice, meat, fish, tofu, saladなど）と area_px を含めてください。scaleCandidates にはスケール取得可能な物体（箸、皿、缶、名刺など）の label, length_px, confidence を含めてください。summary と ingredients はこれまで通り生成し、これらのフィールドが存在しないときは空配列として出力してください。',
+          },
+          {
             role: 'user',
             content: [
               {
                 type: 'text',
-                text: 'この料理写真を短く要約し、主要な具材を3つ抽出し、日本語で返答。JSONで {summary:string, ingredients:string[]} を返して。',
+                text: 'この料理写真を短く要約し、主要な具材を3つ抽出し、日本語で返答。JSONで {summary:string, ingredients:string[], components:Component[], scaleCandidates:ScaleCandidate[]} を返して。',
               },
               { type: 'image_url', image_url: { url: dataUrl } },
             ],
@@ -261,6 +266,8 @@ async function summarizeMealFromBase64(imageBase64) {
     if (!obj.summary || !Array.isArray(obj.ingredients)) {
       throw new Error('invalid JSON shape');
     }
+    if (!Array.isArray(obj.components)) obj.components = [];
+    if (!Array.isArray(obj.scaleCandidates)) obj.scaleCandidates = [];
     console.log('stage: ai done');
     return obj;
   } catch (err) {
