@@ -84,10 +84,11 @@ jobs:
             --trigger-http \
             --allow-unauthenticated \
             --service-account="${RUNTIME_SA}" \
-            --max-instance-request-concurrency=10 \
+            --set-env-vars="LINE_CHANNEL_SECRET=${LINE_CHANNEL_SECRET},LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN},OPENAI_API_KEY=${OPENAI_API_KEY},FEATURE_REPLY_V1=true,FIRESTORE_ROOT=users" \
+            --max-concurrency=10 \
             --max-instances=5 \
             --timeout=60 \
-            --set-env-vars="LINE_CHANNEL_SECRET=${LINE_CHANNEL_SECRET},LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN},OPENAI_API_KEY=${OPENAI_API_KEY},FIRESTORE_ROOT=users,FEATURE_REPLY_V1=false"
+            --source=cloud/functions/line-webhook
 
       - name: Show function URL
         run: |
