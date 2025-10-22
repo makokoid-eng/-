@@ -7,6 +7,7 @@ import { logDone, logError, logQueued } from './store.js';
 import { appendRow } from './sheets_legacy.js';
 import { getSenderId, getSourceKind } from './line-source.js';
 import { handleTextCommand } from './text-commands.js';
+import { saveMealResult } from './meals.js';
 
 interface TaskPayload {
   userId: string;
@@ -150,6 +151,27 @@ app.post('/tasks/worker', express.json(), async (req: Request, res: Response) =>
 
     const aiResult = await runAiPipeline(aiInput);
     await lineClient.pushMessage(payload.userId, [{ type: 'text', text: aiResult }]);
+
+    if (payload.type === 'image') {
+      const meta: Record<string, unknown> = {
+        kind: 'image',
+        ...(logId ? { logId } : {}),
+        ...(payload.imageMessageId ? { imageMessageId: payload.imageMessageId } : {})
+      };
+
+      try {
+        await saveMealResult({
+          userId: payload.userId,
+          aiResult: {
+            summary: aiResult,
+            ingredients: []
+          },
+          meta
+        });
+      } catch (error) {
+        console.error('Failed to save meal result', error);
+      }
+    }
 
     const latencyMs = Date.now() - start;
 
