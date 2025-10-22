@@ -12,6 +12,7 @@ import { saveMealResult, type MealResult } from './meals.js';
 import { formatReplyV1 } from './reply/v1.js';
 import { legacyFormatReply } from './reply/legacy.js';
 import { inferTags as inferReplyTags } from './reply/tagsV1.js';
+import { estimateFromVision } from './vision/estimate.js';
 
 interface TaskPayload {
   userId: string;
@@ -20,6 +21,9 @@ interface TaskPayload {
   imageMessageId?: string;
   logId?: string;
 }
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 const lineConfig: MiddlewareConfig = {
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN ?? '',
@@ -184,10 +188,16 @@ app.post('/tasks/worker', express.json(), async (req: Request, res: Response) =>
           )
         )
       : [];
-    const aiMeta =
-      aiResult?.meta && typeof aiResult.meta === 'object' && !Array.isArray(aiResult.meta)
-        ? { ...aiResult.meta }
-        : undefined;
+    const rawMeta = aiResult?.meta;
+    const visionSource =
+      payload.type === 'image' && isPlainObject(rawMeta)
+        ? (rawMeta as Record<string, unknown>).vision ?? rawMeta
+        : null;
+    const visionEstimates = payload.type === 'image'
+      ? estimateFromVision(visionSource ?? null)
+      : null;
+
+    const aiMeta = isPlainObject(rawMeta) ? { ...rawMeta } : undefined;
 
     const meal: MealResult = {
       summary: typeof aiResult?.summary === 'string' && aiResult.summary.trim().length > 0
@@ -195,14 +205,15 @@ app.post('/tasks/worker', express.json(), async (req: Request, res: Response) =>
         : null,
       ingredients: normalizedIngredients,
       tags: normalizedTags.length > 0 ? normalizedTags : undefined,
-      meta: aiMeta
+      meta: aiMeta,
+      estimates: visionEstimates ?? null
     };
 
     const useV1 = process.env.FEATURE_REPLY_V1 === 'true';
     if (!meal.tags?.length && meal.ingredients?.length) {
       meal.tags = inferReplyTags(meal.ingredients);
     }
-    meal.meta = { ...(meal.meta ?? {}), version: 'v1' };
+    meal.meta = { ...(meal.meta ?? {}), version: useV1 ? 'v1.1' : 'v1' };
 
     const localTimeHHmm = jstFormatter.format(new Date());
     const messageText = useV1

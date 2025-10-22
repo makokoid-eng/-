@@ -16,7 +16,8 @@ export async function runAiPipeline(input: AiInput): Promise<MealResult> {
       summary: '画像を受け取りました。現在解析中です。分析結果は後ほどお送りします。',
       ingredients: [],
       tags: [],
-      meta: { pipeline: 'stub', inputType: input.type }
+      meta: { pipeline: 'stub', inputType: input.type },
+      estimates: null
     };
   }
 
@@ -34,6 +35,7 @@ export async function runAiPipeline(input: AiInput): Promise<MealResult> {
     summary: `「${text}」について調査しています。結果を少しお待ちください。`,
     ingredients: [],
     tags: [],
-    meta: { pipeline: 'stub', inputType: input.type }
+    meta: { pipeline: 'stub', inputType: input.type },
+    estimates: null
   };
 }
