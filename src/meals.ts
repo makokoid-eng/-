@@ -187,10 +187,19 @@ export async function saveMealResult({
     ...(meta ?? {}),
     ...aiMeta
   };
+  payloadMeta.version = estimates ? 'v1.1' : 'v1';
 
-  payloadMeta.estimates = estimates ?? null;
-
-  const payload = {
+  const payload: {
+    summary: string | null;
+    ingredients: string[];
+    tags: string[] | null;
+    imageBytes: { kind: 'base64'; length: number } | null;
+    model: string;
+    source: string;
+    createdAt: ReturnType<typeof FieldValue.serverTimestamp>;
+    meta: Record<string, unknown>;
+    estimates?: typeof estimates;
+  } = {
     summary,
     ingredients,
     tags,
@@ -198,10 +207,14 @@ export async function saveMealResult({
       ? { kind: 'base64' as const, length: imageBytesBase64.length }
       : null,
     model: 'gpt-4o-mini',
+    source: 'line',
     createdAt: FieldValue.serverTimestamp(),
-    meta: payloadMeta,
-    estimates
+    meta: payloadMeta
   };
+
+  if (estimates) {
+    payload.estimates = estimates;
+  }
 
   const docRef = await firestore
     .collection(root)
@@ -209,7 +222,7 @@ export async function saveMealResult({
     .collection('meals')
     .add(payload);
 
-  console.log(`stage: firestore saved ${root}/${userId}/meals/${docRef.id}`);
+  console.log('stage: firestore saved', `${root}/${userId}/meals/${docRef.id}`);
   console.log('stage: after saveMealResult');
   return docRef.id;
 }
