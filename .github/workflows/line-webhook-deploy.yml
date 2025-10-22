@@ -58,6 +58,16 @@ jobs:
             --format="value(email)" >/dev/null
           echo "✔ Service Account exists"
 
+      - name: "Preflight: ensure package.json exists"
+        working-directory: cloud/functions/line-webhook
+        run: |
+          set -euo pipefail
+          if [ ! -f package.json ]; then
+            echo "package.json not found in $(pwd)" >&2
+            exit 1
+          fi
+          echo "✔ package.json found"
+
       - name: Install dependencies (function)
         working-directory: cloud/functions/line-webhook
         run: |
@@ -88,7 +98,7 @@ jobs:
             --concurrency=10 \
             --max-instances=5 \
             --timeout=60 \
-            --source=cloud/functions/line-webhook
+            --source="${GITHUB_WORKSPACE}/cloud/functions/line-webhook"
 
       - name: Show function URL
         run: |
