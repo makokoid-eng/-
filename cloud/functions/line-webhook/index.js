@@ -22,6 +22,19 @@ function getSenderId(source) {
   return source?.userId || source?.groupId || source?.roomId || null;
 }
 
+async function fetchLineProfile(userId) {
+  if (!userId) throw new Error('userId is required');
+  if (!channelAccessToken) throw new Error('LINE_CHANNEL_ACCESS_TOKEN is not set');
+
+  const resp = await axios.get(`https://api.line.me/v2/bot/profile/${userId}`, {
+    headers: {
+      Authorization: `Bearer ${channelAccessToken}`,
+    },
+  });
+
+  return resp?.data || null;
+}
+
 function verifyLineSignature(req) {
   const sig =
     (typeof req.get === 'function'
@@ -228,6 +241,43 @@ const app = async (req, res) => {
     const text = (ev?.message?.text || '').trim().toLowerCase();
     const replyToken = ev.replyToken;
     const senderId = getSenderId(ev?.source);
+
+    if (ev?.type === 'follow') {
+      const userId = ev?.source?.userId;
+      console.log('stage: follow event received, userId=', userId);
+
+      if (!userId) {
+        console.warn('stage: follow handler skipped - userId missing');
+        return res.status(200).send('ok');
+      }
+
+      try {
+        const profile = await fetchLineProfile(userId);
+        const payload = {
+          displayName: profile?.displayName ?? null,
+          pictureUrl: profile?.pictureUrl ?? null,
+          createdAt: FieldValue.serverTimestamp(),
+        };
+
+        await db.collection(FIRESTORE_ROOT).doc(userId).set(payload, { merge: true });
+        console.log('stage: follow profile saved');
+      } catch (error) {
+        console.error('stage: follow handler error', error?.message || error);
+      }
+
+      if (replyToken) {
+        const followMessage = [
+          '友だち追加ありがとう！📸 写真を送るとAIが要約して履歴に保存します。',
+          '🧾「履歴」= 直近7日のまとめ',
+          '🔁「ping save」= 保存テスト',
+          '※ 未友だちやグループは個人IDが取れないため、まずはこのトークで友だち状態にしてね。',
+        ].join('\n');
+        const replyStatus = await replyLine(replyToken, followMessage);
+        console.log('reply status=', replyStatus);
+      }
+
+      return res.status(200).send('ok');
+    }
 
     console.log(
       'stage: senderId =',
