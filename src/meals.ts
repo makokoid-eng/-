@@ -2,6 +2,96 @@ import { FieldValue } from 'firebase-admin/firestore';
 
 import { getDb } from './firebase-admin.js';
 
+const PROTEIN_KEYWORDS = [
+  '鶏',
+  '豚',
+  '牛',
+  '魚',
+  'まぐろ',
+  'さけ',
+  '卵',
+  '豆腐',
+  '納豆',
+  '大豆',
+  'ﾖｰｸﾞﾙﾄ',
+  'ヨーグルト',
+  'チーズ',
+  'ﾁｰｽﾞ',
+  'ハム',
+  'ﾊﾑ',
+  'ベーコン'
+] as const;
+
+const CARB_KEYWORDS = [
+  'ご飯',
+  '米',
+  'パン',
+  '麺',
+  'パスタ',
+  'うどん',
+  'そば',
+  '餅',
+  '芋',
+  'じゃが',
+  'さつまいも'
+] as const;
+
+const VEGETABLE_KEYWORDS = [
+  'サラダ',
+  'レタス',
+  'キャベツ',
+  'トマト',
+  'きゅうり',
+  '胡瓜',
+  'ブロッコリー',
+  '小松菜',
+  'ほうれん草',
+  'にんじん'
+] as const;
+
+const FAT_KEYWORDS = [
+  '揚げ',
+  'フライ',
+  '天ぷら',
+  'バター',
+  'マヨ',
+  '油',
+  'オイル'
+] as const;
+
+type KeywordList = readonly string[];
+
+function includesAny(source: string, keywords: KeywordList): boolean {
+  return keywords.some((word) => source.includes(word));
+}
+
+export function inferTags(ingredients: readonly string[] = []): string[] {
+  const normalized = (ingredients ?? []).filter(
+    (ingredient): ingredient is string => typeof ingredient === 'string'
+  );
+  const joined = normalized.join('').toLowerCase();
+
+  const tags: string[] = [];
+
+  if (joined && includesAny(joined, PROTEIN_KEYWORDS)) {
+    tags.push('たんぱく質');
+  }
+
+  if (joined && includesAny(joined, CARB_KEYWORDS)) {
+    tags.push('炭水化物');
+  }
+
+  if (joined && includesAny(joined, VEGETABLE_KEYWORDS)) {
+    tags.push('野菜');
+  }
+
+  if (joined && includesAny(joined, FAT_KEYWORDS)) {
+    tags.push('油脂');
+  }
+
+  return Array.from(new Set(tags));
+}
+
 export interface MealResult {
   summary?: string | null;
   ingredients?: string[] | null;
@@ -37,9 +127,12 @@ export async function saveMealResult({
   const summaryValue = aiResult?.summary;
   const summary = typeof summaryValue === 'string' ? summaryValue : null;
 
+  const tags = inferTags(ingredients);
+
   const payload = {
     summary,
     ingredients,
+    tags,
     imageBytes: imageBytesBase64
       ? { kind: 'base64' as const, length: imageBytesBase64.length }
       : null,
