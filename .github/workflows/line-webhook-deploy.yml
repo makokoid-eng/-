@@ -83,7 +83,7 @@ jobs:
             --region="${REGION}" \
             --runtime=nodejs20 \
             --service-account="${RUNTIME_SA}" \
-            --set-env-vars "FEATURE_REPLY_V1=true,FIRESTORE_ROOT=users" \
+            --set-env-vars "FEATURE_REPLY_V1=true,FIRESTORE_ROOT=users,LINE_CHANNEL_SECRET=${{ secrets.LINE_CHANNEL_SECRET }},LINE_CHANNEL_ACCESS_TOKEN=${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" \
             --concurrency=1 \
             --max-instances=5 \
             --timeout=60 \
