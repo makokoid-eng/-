@@ -1,6 +1,14 @@
 import crypto from 'crypto';
 import axios from 'axios';
 import OpenAI from 'openai';
+import { Firestore, FieldValue } from '@google-cloud/firestore';
+
+// プロジェクトIDは自動検出でOK。明示したい場合は projectId を渡す。
+// const db = new Firestore({ projectId: process.env.GCP_PROJECT_ID });
+const db = new Firestore();
+
+// ルートコレクション名は環境変数で上書き可
+const FIRESTORE_ROOT = process.env.FIRESTORE_ROOT || 'users';
 
 const openaiApiKey = process.env.OPENAI_API_KEY;
 if (!openaiApiKey) {
@@ -81,6 +89,31 @@ async function downloadImageAsBase64(messageId) {
   const base64 = buf.toString('base64');
   console.log('stage: image to base64 length=', base64?.length || 0);
   return base64;
+}
+
+async function saveMealResult({ userId, imageBytes, result, meta }) {
+  try {
+    const ts = new Date().toISOString().replace(/[:.]/g, '');
+    const docRef = db
+      .collection(FIRESTORE_ROOT)
+      .doc(userId)
+      .collection('meals')
+      .doc(ts);
+
+    const payload = {
+      summary: result?.summary ?? null,
+      ingredients: Array.isArray(result?.ingredients) ? result.ingredients : [],
+      imageBytes: typeof imageBytes === 'number' ? imageBytes : null, // 画像本体は保存しない
+      model: 'gpt-4o-mini',
+      createdAt: FieldValue.serverTimestamp(),
+      ...meta,
+    };
+
+    await docRef.set(payload, { merge: false });
+    console.log('stage: firestore saved', docRef.path);
+  } catch (e) {
+    console.error('stage: firestore error', e?.message || e);
+  }
 }
 
 async function summarizeMealFromBase64(imageBase64) {
@@ -186,6 +219,14 @@ const app = async (req, res) => {
       let result;
       try {
         result = await summarizeMealFromBase64(imageBase64);
+        if (ev.source?.userId) {
+          await saveMealResult({
+            userId: ev.source.userId,
+            imageBytes: imageBase64?.length || 0,
+            result,
+            meta: { source: 'line-image', version: 1 },
+          });
+        }
         const msg = `🍽️ AI解析結果\n要約: ${result.summary}\n主な具材: ${result.ingredients.slice(0, 3).join('・')}`;
         if (ev.source?.userId) {
           const pushStatus = await pushLine(ev.source.userId, msg);
