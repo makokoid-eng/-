@@ -92,6 +92,11 @@ async function downloadImageAsBase64(messageId) {
 }
 
 async function saveMealResult({ userId, imageBytes, result, meta }) {
+  if (!userId) {
+    console.warn('stage: firestore skip - userId missing');
+    return;
+  }
+
   console.log('stage: firestore start');
   try {
     const ts = new Date().toISOString().replace(/[:.]/g, '');
@@ -107,7 +112,7 @@ async function saveMealResult({ userId, imageBytes, result, meta }) {
       imageBytes: typeof imageBytes === 'number' ? imageBytes : null, // 画像本体は保存しない
       model: 'gpt-4o-mini',
       createdAt: FieldValue.serverTimestamp(),
-      meta: meta || {},
+      meta: meta ?? {},
     };
 
     await docRef.set(payload);
