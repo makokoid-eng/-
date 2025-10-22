@@ -1,0 +1,107 @@
+{
+  "defaults": {
+    "servingWeight": 100,
+    "density": 1.0,
+    "pxPerMm": 3.7795275591,
+    "nutrients": [
+      "calories",
+      "protein",
+      "fat",
+      "carbs",
+      "fiber",
+      "sodium"
+    ]
+  },
+  "items": [
+    {
+      "id": "white_rice",
+      "name": "白米ごはん",
+      "aliases": ["rice", "ご飯", "白米", "ごはん"],
+      "servingWeight": 150,
+      "density": 0.85,
+      "per100g": {
+        "calories": 168,
+        "protein": 2.5,
+        "fat": 0.3,
+        "carbs": 37.1,
+        "fiber": 0.3,
+        "sodium": 1
+      }
+    },
+    {
+      "id": "miso_soup",
+      "name": "味噌汁",
+      "aliases": ["miso soup", "みそしる", "味噌スープ"],
+      "servingWeight": 180,
+      "density": 1.02,
+      "per100g": {
+        "calories": 34,
+        "protein": 2.6,
+        "fat": 1.1,
+        "carbs": 3.5,
+        "fiber": 0.5,
+        "sodium": 540
+      }
+    },
+    {
+      "id": "grilled_salmon",
+      "name": "焼き鮭",
+      "aliases": ["salmon", "grilled salmon", "しゃけ", "サーモン"],
+      "servingWeight": 80,
+      "density": 1.04,
+      "per100g": {
+        "calories": 208,
+        "protein": 22.5,
+        "fat": 12.3,
+        "carbs": 0.0,
+        "fiber": 0.0,
+        "sodium": 420
+      }
+    },
+    {
+      "id": "boiled_broccoli",
+      "name": "ゆでブロッコリー",
+      "aliases": ["broccoli", "ボイルブロッコリー", "茹でブロッコリー"],
+      "servingWeight": 70,
+      "density": 0.6,
+      "per100g": {
+        "calories": 27,
+        "protein": 3.5,
+        "fat": 0.4,
+        "carbs": 5.2,
+        "fiber": 3.7,
+        "sodium": 15
+      }
+    },
+    {
+      "id": "scrambled_egg",
+      "name": "スクランブルエッグ",
+      "aliases": ["egg", "スクランブルエッグ", "卵料理"],
+      "servingWeight": 100,
+      "density": 1.01,
+      "per100g": {
+        "calories": 148,
+        "protein": 9.9,
+        "fat": 11.1,
+        "carbs": 1.6,
+        "fiber": 0.0,
+        "sodium": 140
+      }
+    },
+    {
+      "id": "green_salad",
+      "name": "グリーンサラダ",
+      "aliases": ["salad", "レタスサラダ", "サラダ"],
+      "servingWeight": 90,
+      "density": 0.35,
+      "per100g": {
+        "calories": 20,
+        "protein": 1.5,
+        "fat": 0.2,
+        "carbs": 3.7,
+        "fiber": 2.2,
+        "sodium": 35
+      }
+    }
+  ]
+}
