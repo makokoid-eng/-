@@ -122,6 +122,23 @@ async function saveMealResult({ userId, imageBytes, result, meta }) {
   }
 }
 
+async function canarySave(userId) {
+  console.log('stage: firestore canary start');
+  const ts = new Date().toISOString().replace(/[:.]/g, '');
+  const docRef = db
+    .collection(FIRESTORE_ROOT)
+    .doc(userId)
+    .collection('meals')
+    .doc(`canary_${ts}`);
+  await docRef.set({
+    summary: 'canary',
+    ingredients: [],
+    createdAt: FieldValue.serverTimestamp(),
+    meta: { source: 'canary' },
+  });
+  console.log('stage: firestore canary saved', docRef.path);
+}
+
 async function summarizeMealFromBase64(imageBase64) {
   console.log('stage: ai start');
   if (!openai) throw new Error('OPENAI client not initialized');
@@ -196,6 +213,23 @@ const app = async (req, res) => {
   if (!ev) return res.status(200).send('ok');
 
   try {
+    const isText = ev.message?.type === 'text';
+    const text = isText ? ev.message?.text || '' : '';
+    const userId = ev.source?.userId;
+
+    if (isText && /ping save/i.test(text)) {
+      if (userId) {
+        await canarySave(userId);
+      } else {
+        console.warn('stage: firestore canary skipped - userId missing');
+      }
+      if (ev.replyToken) {
+        const replyStatus = await replyLine(ev.replyToken, '✅保存テストOK');
+        console.log('reply status=', replyStatus);
+      }
+      return res.sendStatus(200);
+    }
+
     if (ev.message?.type === 'image') {
       if (ev.replyToken) {
         const replyStatus = await replyLine(
