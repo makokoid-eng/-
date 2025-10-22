@@ -197,6 +197,13 @@ app.post('/tasks/worker', express.json(), async (req: Request, res: Response) =>
       ? estimateFromVision(visionSource ?? null)
       : null;
 
+    if (visionEstimates) {
+      console.log('vision estimates summary', {
+        scaleSource: visionEstimates.scale?.source ?? null,
+        confidence: visionEstimates.confidence ?? null
+      });
+    }
+
     const aiMeta = isPlainObject(rawMeta) ? { ...rawMeta } : undefined;
 
     const meal: MealResult = {

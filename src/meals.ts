@@ -181,12 +181,14 @@ export async function saveMealResult({
       ? { ...aiResult.meta }
       : {};
   const estimates = normalizeEstimates(aiResult?.estimates ?? null);
-  const payloadMeta = {
+  const payloadMeta: Record<string, unknown> = {
     source: 'line',
     ts: Date.now(),
     ...(meta ?? {}),
     ...aiMeta
   };
+
+  payloadMeta.estimates = estimates ?? null;
 
   const payload = {
     summary,
