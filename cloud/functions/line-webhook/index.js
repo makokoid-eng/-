@@ -137,7 +137,7 @@ async function summarizeMealFromBase64(imageBase64) {
   }
 }
 
-export const app = async (req, res) => {
+const app = async (req, res) => {
   if (req.method === 'GET') return res.status(200).send('alive');
   if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
@@ -233,3 +233,5 @@ export const app = async (req, res) => {
     return res.status(200).send('ok');
   }
 };
+
+export { app };
