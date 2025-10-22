@@ -5,6 +5,7 @@ import { enqueue } from './tasks.js';
 import { runAiPipeline } from './ai.js';
 import { logDone, logError, logQueued } from './store.js';
 import { appendRow } from './sheets_legacy.js';
+import { getSenderId, getSourceKind } from './line-source.js';
 
 interface TaskPayload {
   userId: string;
@@ -43,8 +44,15 @@ app.post('/line/webhook', middleware(lineConfig), async (req: Request, res: Resp
         }
 
         const replyToken = event.replyToken;
-        const userId = event.source.userId;
-        if (!replyToken || !userId) {
+        const senderId = getSenderId(event.source);
+        const sourceKind = getSourceKind(event.source);
+
+        if (!replyToken || !senderId) {
+          console.warn('Missing replyToken or senderId for event', {
+            hasReplyToken: Boolean(replyToken),
+            sourceKind,
+            source: event.source
+          });
           return;
         }
 
@@ -57,9 +65,10 @@ app.post('/line/webhook', middleware(lineConfig), async (req: Request, res: Resp
         let logId: string | undefined;
         try {
           logId = await logQueued({
-            userId,
+            userId: senderId,
             kind: event.message.type,
-            messageId: event.message.id
+            messageId: event.message.id,
+            sourceKind
           });
         } catch (error) {
           console.error('Failed to record queued log', error);
@@ -68,10 +77,11 @@ app.post('/line/webhook', middleware(lineConfig), async (req: Request, res: Resp
         if (dualWriteEnabled) {
           try {
             await appendRow({
-              userId,
+              userId: senderId,
               kind: event.message.type,
               messageId: event.message.id,
-              note: 'queued'
+              note: 'queued',
+              sourceKind
             });
           } catch (error) {
             console.error('Legacy Sheets append failed', error);
@@ -79,7 +89,7 @@ app.post('/line/webhook', middleware(lineConfig), async (req: Request, res: Resp
         }
 
         const payload: TaskPayload = {
-          userId,
+          userId: senderId,
           type: event.message.type,
           text: event.message.type === 'text' ? event.message.text : undefined,
           imageMessageId: event.message.type === 'image' ? event.message.id : undefined,

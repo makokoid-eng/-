@@ -3,6 +3,7 @@ interface LegacyRowInput {
   kind: string;
   messageId?: string;
   note?: string;
+  sourceKind?: string;
 }
 
 export async function appendRow(row: LegacyRowInput): Promise<void> {
