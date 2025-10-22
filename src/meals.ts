@@ -95,6 +95,8 @@ export function inferTags(ingredients: readonly string[] = []): string[] {
 export interface MealResult {
   summary?: string | null;
   ingredients?: string[] | null;
+  tags?: string[] | null;
+  meta?: Record<string, unknown> | null;
 }
 
 export interface SaveMealResultParams {
@@ -127,7 +129,23 @@ export async function saveMealResult({
   const summaryValue = aiResult?.summary;
   const summary = typeof summaryValue === 'string' ? summaryValue : null;
 
-  const tags = inferTags(ingredients);
+  const rawTags = Array.isArray(aiResult?.tags) ? aiResult.tags : [];
+  const normalizedTags = rawTags
+    .filter((tag): tag is string => typeof tag === 'string')
+    .map((tag) => tag.trim())
+    .filter((tag) => tag.length > 0);
+  const tags = normalizedTags.length > 0 ? Array.from(new Set(normalizedTags)) : inferTags(ingredients);
+
+  const aiMeta =
+    aiResult?.meta && typeof aiResult.meta === 'object' && !Array.isArray(aiResult.meta)
+      ? { ...aiResult.meta }
+      : {};
+  const payloadMeta = {
+    source: 'line',
+    ts: Date.now(),
+    ...(meta ?? {}),
+    ...aiMeta
+  };
 
   const payload = {
     summary,
@@ -138,11 +156,7 @@ export async function saveMealResult({
       : null,
     model: 'gpt-4o-mini',
     createdAt: FieldValue.serverTimestamp(),
-    meta: {
-      source: 'line',
-      ts: Date.now(),
-      ...(meta ?? {})
-    }
+    meta: payloadMeta
   };
 
   const docRef = await firestore
