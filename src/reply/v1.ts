@@ -135,7 +135,7 @@ function formatEstimatesBlock(estimates: MealResult['estimates']): string | null
     parts.push(`エネルギー ${calories}kcal`);
   }
 
-  const lines: string[] = ['📏 量の目安'];
+  const lines: string[] = ['📏 量の目安（±）'];
   if (parts.length > 0) {
     lines.push(parts.join(' / '));
   }
@@ -145,6 +145,10 @@ function formatEstimatesBlock(estimates: MealResult['estimates']): string | null
     : null;
   if (confidenceText) {
     lines.push(confidenceText);
+  }
+
+  if (parts.length > 0 || confidenceText) {
+    lines.push('※±20% 程度の誤差があります');
   }
 
   if (lines.length === 1) {

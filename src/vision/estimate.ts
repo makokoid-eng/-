@@ -1,5 +1,10 @@
 import nutritionTableJson from '../../cloud/functions/line-webhook/src/nutrition/table.json' assert { type: 'json' };
 
+// @ts-expect-error: JavaScript module without type declarations.
+import { estimateNutrition as estimateNutritionV1_1 } from '../../cloud/functions/line-webhook/src/estimation/v1_1/estimate.js';
+// @ts-expect-error: JavaScript module without type declarations.
+import { estimateScale as estimateScaleV1_1 } from '../../cloud/functions/line-webhook/src/estimation/v1_1/scale.js';
+
 import { DEFAULT_PX_PER_MM, resolveScale, type ScaleMeta } from './scale.js';
 
 const nutritionTable = nutritionTableJson as NutritionTable;
@@ -69,6 +74,40 @@ type VisionComponent = {
   weight?: MaybeNumber;
   massGrams?: MaybeNumber;
   mass?: MaybeNumber;
+  heightMm?: MaybeNumber;
+  height_mm?: MaybeNumber;
+  lengthPx?: MaybeNumber;
+  length_px?: MaybeNumber;
+};
+
+type CoreComponentKind = 'salad' | 'rice' | 'meat' | 'fish' | 'tofu';
+
+type CoreComponent = {
+  kind: CoreComponentKind;
+  area_mm2: number;
+  height_mm?: number | null;
+};
+
+type ScaleDetection = {
+  label: string;
+  lengthPx: number;
+  confidence: number | null;
+};
+
+type CoreEstimateResult = {
+  vegetables_g?: MaybeNumber;
+  protein_g?: MaybeNumber;
+  fiber_g?: MaybeNumber;
+  calories_kcal?: MaybeNumber;
+  confidence?: MaybeNumber;
+};
+
+type ScaleEstimateResult = {
+  source?: string;
+  object_size_mm?: MaybeNumber;
+  pixels?: MaybeNumber;
+  px_per_mm?: MaybeNumber;
+  confidence?: MaybeNumber;
 };
 
 type EstimateOptions = {
@@ -158,6 +197,298 @@ const pickNumber = (...values: MaybeNumber[]): number | null => {
     }
   }
   return null;
+};
+
+const SCALE_LABEL_ALIASES: Record<string, string> = {
+  箸: 'chopsticks',
+  はし: 'chopsticks',
+  おはし: 'chopsticks',
+  フォーク: 'fork',
+  ふぉーく: 'fork',
+  スプーン: 'spoon',
+  すぷーん: 'spoon',
+  缶: 'can',
+  カード: 'card',
+  かーど: 'card',
+  皿: 'plate',
+  プレート: 'plate',
+  さら: 'plate',
+  コップ: 'cup',
+  こっぷ: 'cup',
+  グラス: 'cup'
+};
+
+const SCALE_LABELS = new Set([
+  'chopsticks',
+  'fork',
+  'spoon',
+  'can',
+  'card',
+  'plate',
+  'cup'
+]);
+
+const SCALE_DETECTION_CHILD_KEYS = [
+  'detected',
+  'detections',
+  'objects',
+  'items',
+  'scale',
+  'scaleDetections',
+  'samples'
+];
+
+const normalizeScaleLabel = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const alias = SCALE_LABEL_ALIASES[trimmed] ?? SCALE_LABEL_ALIASES[trimmed.toLowerCase()];
+  if (alias && SCALE_LABELS.has(alias)) {
+    return alias;
+  }
+  const lower = trimmed.toLowerCase();
+  return SCALE_LABELS.has(lower) ? lower : null;
+};
+
+const toScaleDetection = (value: unknown): ScaleDetection | null => {
+  if (!isPlainObject(value)) return null;
+  const record = value as Record<string, unknown>;
+  const label =
+    normalizeScaleLabel(record.label) ??
+    normalizeScaleLabel(record.kind) ??
+    normalizeScaleLabel(record.type) ??
+    normalizeScaleLabel(record.name) ??
+    normalizeScaleLabel(record.title) ??
+    normalizeScaleLabel(record.code);
+
+  const lengthRecord = record as Record<string, MaybeNumber>;
+  const lengthPx = pickNumber(
+    lengthRecord.lengthPx,
+    lengthRecord.length_px,
+    lengthRecord.length,
+    lengthRecord.pixels,
+    lengthRecord.px
+  );
+
+  if (!label || !lengthPx) {
+    return null;
+  }
+
+  const confidence = toFiniteNumber(lengthRecord.confidence ?? lengthRecord.score);
+
+  return {
+    label,
+    lengthPx,
+    confidence: confidence !== null ? Math.max(0, Math.min(1, confidence)) : null
+  };
+};
+
+const extractScaleDetections = (source: unknown): ScaleDetection[] => {
+  const queue: unknown[] = [];
+  const visited = new Set<unknown>();
+  if (source !== null && source !== undefined) {
+    queue.push(source);
+  }
+
+  const pushChild = (node: unknown, key: string): void => {
+    if (!isPlainObject(node)) return;
+    const child = (node as Record<string, unknown>)[key];
+    if (Array.isArray(child) || isPlainObject(child)) {
+      queue.push(child);
+    }
+  };
+
+  const detections: ScaleDetection[] = [];
+  const dedupe = new Set<string>();
+
+  while (queue.length) {
+    const node = queue.shift();
+    if (!node || visited.has(node)) continue;
+    visited.add(node);
+
+    if (Array.isArray(node)) {
+      for (const item of node) {
+        if (Array.isArray(item) || isPlainObject(item)) {
+          queue.push(item);
+        } else {
+          const detection = toScaleDetection(item);
+          if (detection) {
+            const key = `${detection.label}:${Math.round(detection.lengthPx * 1000)}`;
+            if (!dedupe.has(key)) {
+              dedupe.add(key);
+              detections.push(detection);
+            }
+          }
+        }
+      }
+      continue;
+    }
+
+    if (isPlainObject(node)) {
+      const detection = toScaleDetection(node);
+      if (detection) {
+        const key = `${detection.label}:${Math.round(detection.lengthPx * 1000)}`;
+        if (!dedupe.has(key)) {
+          dedupe.add(key);
+          detections.push(detection);
+        }
+      }
+
+      for (const key of SCALE_DETECTION_CHILD_KEYS) {
+        pushChild(node, key);
+      }
+    }
+  }
+
+  return detections;
+};
+
+const COMPONENT_KIND_KEYWORDS: Record<CoreComponentKind, readonly string[]> = {
+  salad: [
+    'salad',
+    'vegetable',
+    'vegetables',
+    'greens',
+    'veggie',
+    'サラダ',
+    '野菜',
+    '菜',
+    'レタス',
+    'ブロッコリー',
+    'ほうれん',
+    '小松菜',
+    'きゅうり',
+    '胡瓜',
+    'キャベツ',
+    'トマト'
+  ],
+  rice: ['rice', 'ご飯', 'ごはん', '白米', '米', 'ライス'],
+  meat: [
+    'meat',
+    'beef',
+    'pork',
+    'chicken',
+    '肉',
+    '牛',
+    '豚',
+    '鶏',
+    'からあげ',
+    '唐揚げ',
+    'ステーキ',
+    'ハンバーグ',
+    'ソーセージ',
+    'ベーコン',
+    'ハム'
+  ],
+  fish: [
+    'fish',
+    'seafood',
+    'salmon',
+    'sashimi',
+    'tuna',
+    'mackerel',
+    'さかな',
+    '魚',
+    '鮭',
+    'サーモン',
+    'さけ',
+    'まぐろ',
+    'マグロ',
+    '鯖',
+    'さば',
+    'ぶり',
+    '鰤'
+  ],
+  tofu: ['tofu', '豆腐', '厚揚げ', '揚げ出し']
+};
+
+const extractStringCandidates = (
+  component: VisionComponent | null | undefined
+): string[] => {
+  if (!component || typeof component !== 'object') {
+    return [];
+  }
+
+  const candidates = new Set<string>();
+
+  const pushValue = (value: unknown): void => {
+    if (typeof value !== 'string') return;
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    candidates.add(trimmed);
+    candidates.add(trimmed.toLowerCase());
+  };
+
+  const record = component as Record<string, unknown>;
+  pushValue((record.kind ?? record.category ?? record.type) as string | undefined);
+  pushValue(component.code);
+  pushValue(component.label);
+  pushValue(component.name);
+  pushValue(component.title);
+  pushValue(component.foodId ?? component.food_id);
+  pushValue(component.id);
+
+  const tagValues = [record.tags, record.keywords, record.categories];
+  for (const value of tagValues) {
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        pushValue(item);
+      }
+    }
+  }
+
+  return Array.from(candidates);
+};
+
+const resolveCoreKind = (
+  component: VisionComponent | null | undefined
+): CoreComponentKind | null => {
+  const candidates = extractStringCandidates(component);
+  for (const candidate of candidates) {
+    const lower = candidate.toLowerCase();
+    for (const [kind, keywords] of Object.entries(COMPONENT_KIND_KEYWORDS) as [
+      CoreComponentKind,
+      readonly string[]
+    ][]) {
+      if (keywords.some((keyword) => lower.includes(keyword.toLowerCase()))) {
+        return kind;
+      }
+    }
+  }
+  return null;
+};
+
+const toCoreComponents = (
+  components: VisionComponent[],
+  pxPerMm: number | null
+): CoreComponent[] => {
+  const result: CoreComponent[] = [];
+  const pxPerMmSafe = pxPerMm && pxPerMm > 0 ? pxPerMm : null;
+
+  for (const component of components) {
+    const kind = resolveCoreKind(component);
+    if (!kind) continue;
+
+    const areaMm2 = areaMm2FromComponent(component, pxPerMmSafe);
+    if (!areaMm2 || areaMm2 <= 0) continue;
+
+    const heightMm = pickNumber(
+      component.heightMm,
+      component.height_mm,
+      component.thicknessMm,
+      component.thickness_mm,
+      component.depthMm,
+      component.depth_mm
+    );
+
+    result.push({
+      kind,
+      area_mm2: areaMm2,
+      height_mm: heightMm ?? null
+    });
+  }
+
+  return result;
 };
 
 const areaPxFromComponent = (component: VisionComponent | null | undefined): number | null => {
@@ -427,43 +758,167 @@ export const estimateFromVision = (vision: unknown): VisionEstimates | null => {
   const root = isPlainObject(vision) ? vision : {};
   const components = extractComponents(root.components ?? vision);
   const meta = isPlainObject(root.meta) ? (root.meta as ScaleMeta) : undefined;
+  const scaleContext = isPlainObject(root)
+    ? {
+        scale: (root as Record<string, unknown>).scale,
+        detected: (root as Record<string, unknown>).detected,
+        detections: (root as Record<string, unknown>).detections,
+        objects: (root as Record<string, unknown>).objects,
+        scaleDetections: (root as Record<string, unknown>).scaleDetections,
+        meta
+      }
+    : meta;
+
+  const detectionSources: unknown[] = [scaleContext];
+  if (meta) {
+    detectionSources.push(meta);
+  }
+
+  const detectionMap = new Map<string, ScaleDetection>();
+  for (const source of detectionSources) {
+    const detections = extractScaleDetections(source);
+    for (const detection of detections) {
+      const key = `${detection.label}:${Math.round(detection.lengthPx * 1000)}`;
+      if (!detectionMap.has(key)) {
+        detectionMap.set(key, detection);
+      }
+    }
+  }
+
+  const scaleDetections = Array.from(detectionMap.values());
+  const scaleEstimate: ScaleEstimateResult | null = scaleDetections.length
+    ? (estimateScaleV1_1(
+        scaleDetections.map((detection) => ({
+          label: detection.label,
+          length_px: detection.lengthPx,
+          confidence: detection.confidence ?? undefined
+        }))
+      ) as ScaleEstimateResult)
+    : null;
+
+  const pxPerMmOverride = toFiniteNumber(scaleEstimate?.px_per_mm);
+
   const { totals, breakdown, meta: estimateMeta } = estimateNutrition({
     components,
     meta: meta ?? {},
-    options: {}
+    options: pxPerMmOverride ? { pxPerMm: pxPerMmOverride } : {}
   });
 
-  const calories = toFiniteNumber(totals.calories);
-  const protein = toFiniteNumber(totals.protein);
-  const fiber = toFiniteNumber(totals.fiber);
+  const caloriesLegacy = toFiniteNumber(totals.calories);
+  const proteinLegacy = toFiniteNumber(totals.protein);
+  const fiberLegacy = toFiniteNumber(totals.fiber);
 
-  const vegetablesTotal = breakdown.reduce((sum, item) => {
+  const vegetablesTotalLegacy = breakdown.reduce((sum, item) => {
     if (!item.matched) return sum;
     return matchesVegetable(item.label) ? sum + item.grams : sum;
   }, 0);
 
+  const pxPerMmCombined =
+    pxPerMmOverride ??
+    toFiniteNumber(estimateMeta.pxPerMm) ??
+    (meta ? toFiniteNumber(meta.pxPerMm) : null) ??
+    DEFAULT_PX_PER_MM;
+
+  const coreComponents = components.length
+    ? toCoreComponents(components, pxPerMmCombined)
+    : [];
+
+  const coreEstimate: CoreEstimateResult | null = coreComponents.length
+    ? (estimateNutritionV1_1(
+        coreComponents.map((component) => ({
+          kind: component.kind,
+          area_mm2: component.area_mm2,
+          ...(component.height_mm ? { height_mm: component.height_mm } : {})
+        }))
+      ) as CoreEstimateResult)
+    : null;
+
+  const preferCore = (
+    coreValue: MaybeNumber | undefined,
+    legacyValue: MaybeNumber | null
+  ): number | null => {
+    const core = toFiniteNumber(coreValue);
+    if (core !== null) {
+      return core;
+    }
+    if (legacyValue === null || legacyValue === undefined) {
+      return null;
+    }
+    return toFiniteNumber(legacyValue);
+  };
+
+  const vegetablesCombinedRaw = preferCore(
+    coreEstimate?.vegetables_g as MaybeNumber,
+    vegetablesTotalLegacy > 0 ? vegetablesTotalLegacy : null
+  );
+  const proteinCombinedRaw = preferCore(
+    coreEstimate?.protein_g as MaybeNumber,
+    proteinLegacy
+  );
+  const fiberCombinedRaw = preferCore(
+    coreEstimate?.fiber_g as MaybeNumber,
+    fiberLegacy
+  );
+  const caloriesCombinedRaw = preferCore(
+    coreEstimate?.calories_kcal as MaybeNumber,
+    caloriesLegacy
+  );
+
   const rawConfidence =
     toFiniteNumber(root.confidence) ??
     toFiniteNumber((meta as Record<string, unknown> | undefined)?.confidence);
+  const coreConfidence = toFiniteNumber(coreEstimate?.confidence as MaybeNumber);
+  const selectedConfidence =
+    rawConfidence !== null ? rawConfidence : coreConfidence;
   const clampedConfidence =
-    rawConfidence === null ? null : Math.max(0, Math.min(1, rawConfidence));
+    selectedConfidence === null
+      ? null
+      : Math.max(0, Math.min(1, selectedConfidence));
 
-  const assumptions = isPlainObject(root.assumptions)
-    ? (root.assumptions as Record<string, unknown>)
-    : null;
+  const assumptionsBase: Record<string, unknown> = isPlainObject(root.assumptions)
+    ? { ...(root.assumptions as Record<string, unknown>) }
+    : {};
+  if (scaleEstimate) {
+    assumptionsBase.v1_1_scale = {
+      source:
+        typeof scaleEstimate.source === 'string' && scaleEstimate.source
+          ? scaleEstimate.source
+          : null,
+      px_per_mm: roundOptional(scaleEstimate.px_per_mm, 4),
+      confidence: roundOptional(scaleEstimate.confidence, 2)
+    };
+  }
+  if (coreComponents.length) {
+    assumptionsBase.v1_1_components = coreComponents.length;
+  }
+
+  const assumptions =
+    Object.keys(assumptionsBase).length > 0 ? assumptionsBase : null;
+
+  const scaleSourceCandidate =
+    typeof scaleEstimate?.source === 'string' ? scaleEstimate.source.trim() : '';
+  const resolvedScaleSource =
+    scaleSourceCandidate || estimateMeta.scaleSource || 'fallback';
 
   const scale = {
-    pxPerMm: roundOptional(estimateMeta.pxPerMm, 4),
-    px_per_mm: roundOptional(estimateMeta.pxPerMm, 4),
-    source: estimateMeta.scaleSource ?? null
+    pxPerMm: roundOptional(pxPerMmCombined, 4),
+    px_per_mm: roundOptional(pxPerMmCombined, 4),
+    source: resolvedScaleSource
   };
 
   const result: VisionEstimates = {
-    vegetables_g: vegetablesTotal > 0 ? roundOptional(vegetablesTotal, 1) : null,
-    protein_g: protein !== null ? roundOptional(protein, 1) : null,
-    calories_kcal: calories !== null ? Math.round(calories) : null,
-    fiber_g: fiber !== null ? roundOptional(fiber, 1) : null,
-    confidence: clampedConfidence !== null ? roundOptional(clampedConfidence, 2) : null,
+    vegetables_g:
+      vegetablesCombinedRaw !== null && vegetablesCombinedRaw > 0
+        ? roundOptional(vegetablesCombinedRaw, 1)
+        : null,
+    protein_g:
+      proteinCombinedRaw !== null ? roundOptional(proteinCombinedRaw, 1) : null,
+    calories_kcal:
+      caloriesCombinedRaw !== null ? Math.round(caloriesCombinedRaw) : null,
+    fiber_g:
+      fiberCombinedRaw !== null ? roundOptional(fiberCombinedRaw, 1) : null,
+    confidence:
+      clampedConfidence !== null ? roundOptional(clampedConfidence, 2) : null,
     scale,
     assumptions
   };
