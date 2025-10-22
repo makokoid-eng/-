@@ -8,7 +8,10 @@ import { appendRow } from './sheets_legacy.js';
 import { getSenderId, getSourceKind } from './line-source.js';
 import { handleFollow } from './follow.js';
 import { handleTextCommand, type ReplyMessage } from './text-commands.js';
-import { saveMealResult } from './meals.js';
+import { saveMealResult, type MealResult } from './meals.js';
+import { formatReplyV1 } from './reply/v1.js';
+import { legacyFormatReply } from './reply/legacy.js';
+import { inferTags as inferReplyTags } from './reply/tagsV1.js';
 
 interface TaskPayload {
   userId: string;
@@ -27,6 +30,12 @@ const lineClient = new Client({ channelAccessToken: lineConfig.channelAccessToke
 const app = express();
 
 const dualWriteEnabled = (process.env.DUAL_WRITE ?? 'false').toLowerCase() === 'true';
+const jstFormatter = new Intl.DateTimeFormat('ja-JP', {
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+  timeZone: 'Asia/Tokyo'
+});
 
 app.get('/healthz', (_req: Request, res: Response) => {
   res.status(200).send('ok');
@@ -158,7 +167,49 @@ app.post('/tasks/worker', express.json(), async (req: Request, res: Response) =>
       : { type: 'text' as const, text: payload.text };
 
     const aiResult = await runAiPipeline(aiInput);
-    await lineClient.pushMessage(payload.userId, [{ type: 'text', text: aiResult }]);
+
+    const normalizedIngredients = Array.isArray(aiResult?.ingredients)
+      ? aiResult.ingredients
+          .filter((ingredient): ingredient is string => typeof ingredient === 'string')
+          .map((ingredient) => ingredient.trim())
+          .filter((ingredient) => ingredient.length > 0)
+      : [];
+    const normalizedTags = Array.isArray(aiResult?.tags)
+      ? Array.from(
+          new Set(
+            aiResult.tags
+              .filter((tag): tag is string => typeof tag === 'string')
+              .map((tag) => tag.trim())
+              .filter((tag) => tag.length > 0)
+          )
+        )
+      : [];
+    const aiMeta =
+      aiResult?.meta && typeof aiResult.meta === 'object' && !Array.isArray(aiResult.meta)
+        ? { ...aiResult.meta }
+        : undefined;
+
+    const meal: MealResult = {
+      summary: typeof aiResult?.summary === 'string' && aiResult.summary.trim().length > 0
+        ? aiResult.summary.trim()
+        : null,
+      ingredients: normalizedIngredients,
+      tags: normalizedTags.length > 0 ? normalizedTags : undefined,
+      meta: aiMeta
+    };
+
+    const useV1 = process.env.FEATURE_REPLY_V1 === 'true';
+    if (!meal.tags?.length && meal.ingredients?.length) {
+      meal.tags = inferReplyTags(meal.ingredients);
+    }
+    meal.meta = { ...(meal.meta ?? {}), version: 'v1' };
+
+    const localTimeHHmm = jstFormatter.format(new Date());
+    const messageText = useV1
+      ? formatReplyV1(meal, localTimeHHmm)
+      : legacyFormatReply(meal, localTimeHHmm);
+
+    await lineClient.pushMessage(payload.userId, [{ type: 'text', text: messageText }]);
 
     if (payload.type === 'image') {
       const meta: Record<string, unknown> = {
@@ -170,10 +221,7 @@ app.post('/tasks/worker', express.json(), async (req: Request, res: Response) =>
       try {
         await saveMealResult({
           userId: payload.userId,
-          aiResult: {
-            summary: aiResult,
-            ingredients: []
-          },
+          aiResult: meal,
           meta
         });
       } catch (error) {
@@ -186,7 +234,7 @@ app.post('/tasks/worker', express.json(), async (req: Request, res: Response) =>
     if (logId) {
       try {
         await logDone(logId, {
-          resultSummary: aiResult,
+          resultSummary: messageText,
           latencyMs
         });
       } catch (error) {
