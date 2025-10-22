@@ -3,6 +3,9 @@ import axios from 'axios';
 import OpenAI from 'openai';
 import { Firestore, FieldValue } from '@google-cloud/firestore';
 import { handleFollow } from './handlers/follow.js';
+import { estimateScale } from './src/estimation/v1_1/scale.js';
+import { estimateNutrition } from './src/estimation/v1_1/estimate.js';
+import { formatReplyV1 } from './reply/v1.js';
 
 // プロジェクトIDは自動検出でOK。明示したい場合は projectId を渡す。
 // const db = new Firestore({ projectId: process.env.GCP_PROJECT_ID });
@@ -109,7 +112,7 @@ async function downloadImageAsBase64(messageId) {
   return base64;
 }
 
-async function saveMealResult({ userId, imageBytes, result, meta }) {
+async function saveMealResult({ userId, imageBytes, result, meta, estimates }) {
   if (!userId) {
     console.warn('stage: firestore skip - userId missing');
     return;
@@ -117,24 +120,30 @@ async function saveMealResult({ userId, imageBytes, result, meta }) {
 
   console.log('stage: firestore start');
   try {
-    const ts = new Date().toISOString().replace(/[:.]/g, '');
-    const docRef = db
+    const collectionRef = db
       .collection(FIRESTORE_ROOT)
       .doc(userId)
-      .collection('meals')
-      .doc(ts);
+      .collection('meals');
 
     const payload = {
       summary: result?.summary ?? '(no summary)',
       ingredients: Array.isArray(result?.ingredients) ? result.ingredients : [],
       imageBytes: typeof imageBytes === 'number' ? imageBytes : null, // 画像本体は保存しない
       model: 'gpt-4o-mini',
+      source: 'line',
       createdAt: FieldValue.serverTimestamp(),
-      meta: meta || {},
+      meta: { ...(meta || {}), version: estimates ? 'v1.1' : 'v1' },
     };
 
-    await docRef.set(payload);
-    console.log('stage: firestore saved', docRef.path);
+    if (estimates) {
+      payload.estimates = estimates;
+    }
+
+    const docRef = await collectionRef.add(payload);
+    console.log(
+      'stage: firestore saved',
+      `${FIRESTORE_ROOT}/${userId}/meals/${docRef.id}`,
+    );
   } catch (e) {
     console.error('stage: firestore error', e?.message || e);
   }
@@ -330,6 +339,7 @@ const app = async (req, res) => {
     }
 
     if (ev.message?.type === 'image') {
+      console.log('v1.1 start: image handler');
       if (ev.replyToken) {
         const replyStatus = await replyLine(
           ev.replyToken,
@@ -356,8 +366,55 @@ const app = async (req, res) => {
 
       console.log('stage: summarizeMeal called');
       let result;
+      let estimates = null;
       try {
         result = await summarizeMealFromBase64(imageBase64);
+        const vision = result?.vision || null;
+        console.log('v1.1 vision keys:', Object.keys(vision || {}));
+        const scaleCandidates = Array.isArray(vision?.scaleCandidates)
+          ? vision.scaleCandidates
+          : [];
+        const components = Array.isArray(vision?.components)
+          ? vision.components
+          : [];
+        console.log('v1.1 scaleCandidates.len=', scaleCandidates.length);
+        console.log('v1.1 components.len=', components.length);
+
+        try {
+          const scale = estimateScale(scaleCandidates);
+          const pxmm = Math.max(scale?.px_per_mm || 0, 0) || 1.0;
+          const componentsMm = components.map((c) => ({
+            kind: c?.kind,
+            area_mm2: (Number(c?.area_px) || 0) / (pxmm * pxmm),
+            height_mm: c?.height_mm,
+          }));
+          const nutrition = estimateNutrition(componentsMm);
+          if (nutrition && typeof nutrition === 'object') {
+            nutrition.scale = {
+              source: scale?.source,
+              object_size_mm: scale?.object_size_mm,
+              pixels: scale?.pixels,
+              px_per_mm: pxmm,
+            };
+            nutrition.assumptions = {
+              salad_height_mm: 30,
+              rice_height_mm: 45,
+              meat_height_mm: 18,
+            };
+            estimates = nutrition;
+          }
+          console.log('v1.1 estimates:', estimates);
+        } catch (estimationError) {
+          console.error(
+            'v1.1 estimation error',
+            estimationError?.message || estimationError,
+          );
+        }
+
+        if (estimates) {
+          result.estimates = estimates;
+        }
+
         if (!senderId) {
           console.warn('stage: firestore skip - senderId missing');
         } else {
@@ -366,11 +423,18 @@ const app = async (req, res) => {
             userId: senderId,
             imageBytes: imageBase64?.length || 0,
             result,
-            meta: { source: 'line-image', version: 1 },
+            meta: { source: 'line-image' },
+            estimates,
           });
           console.log('stage: after saveMealResult');
         }
-        const msg = `🍽️ AI解析結果\n要約: ${result.summary}\n主な具材: ${result.ingredients.slice(0, 3).join('・')}`;
+        const msg = formatReplyV1({
+          summary: result?.summary,
+          ingredients: Array.isArray(result?.ingredients)
+            ? result.ingredients.slice(0, 3)
+            : [],
+          estimates,
+        });
         if (senderId) {
           const pushStatus = await pushLine(senderId, msg);
           console.log('push status=', pushStatus);
