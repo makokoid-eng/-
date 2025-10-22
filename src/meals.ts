@@ -1,6 +1,7 @@
 import { FieldValue } from 'firebase-admin/firestore';
 
 import { getDb } from './firebase-admin.js';
+import type { VisionEstimates } from './vision/estimate.js';
 
 const PROTEIN_KEYWORDS = [
   '鶏',
@@ -97,6 +98,7 @@ export interface MealResult {
   ingredients?: string[] | null;
   tags?: string[] | null;
   meta?: Record<string, unknown> | null;
+  estimates?: VisionEstimates | null;
 }
 
 export interface SaveMealResultParams {
@@ -104,6 +106,44 @@ export interface SaveMealResultParams {
   aiResult: MealResult | null | undefined;
   imageBytesBase64?: string | null;
   meta?: Record<string, unknown>;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function finiteOrNull(value: unknown): number | null {
+  const num = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(num) ? num : null;
+}
+
+function normalizeScale(scale: VisionEstimates['scale'] | null | undefined): VisionEstimates['scale'] {
+  const pxPerMm = finiteOrNull(scale?.pxPerMm ?? scale?.px_per_mm);
+  return {
+    pxPerMm,
+    px_per_mm: finiteOrNull(scale?.px_per_mm ?? pxPerMm),
+    source: typeof scale?.source === 'string' ? scale.source : null
+  };
+}
+
+function normalizeEstimates(
+  estimates: VisionEstimates | null | undefined
+): VisionEstimates | null {
+  if (!isPlainObject(estimates)) {
+    return null;
+  }
+
+  const assumptions = isPlainObject(estimates.assumptions) ? estimates.assumptions : null;
+
+  return {
+    vegetables_g: finiteOrNull(estimates.vegetables_g),
+    protein_g: finiteOrNull(estimates.protein_g),
+    calories_kcal: finiteOrNull(estimates.calories_kcal),
+    fiber_g: finiteOrNull(estimates.fiber_g),
+    confidence: finiteOrNull(estimates.confidence),
+    scale: normalizeScale(estimates.scale),
+    assumptions
+  };
 }
 
 export async function saveMealResult({
@@ -140,6 +180,7 @@ export async function saveMealResult({
     aiResult?.meta && typeof aiResult.meta === 'object' && !Array.isArray(aiResult.meta)
       ? { ...aiResult.meta }
       : {};
+  const estimates = normalizeEstimates(aiResult?.estimates ?? null);
   const payloadMeta = {
     source: 'line',
     ts: Date.now(),
@@ -156,7 +197,8 @@ export async function saveMealResult({
       : null,
     model: 'gpt-4o-mini',
     createdAt: FieldValue.serverTimestamp(),
-    meta: payloadMeta
+    meta: payloadMeta,
+    estimates
   };
 
   const docRef = await firestore
