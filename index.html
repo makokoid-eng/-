@@ -41,7 +41,17 @@
     .nav{display:flex; align-items:center; justify-content:space-between; padding:12px 0}
     .logo{display:flex; align-items:center; gap:10px; font-weight:700}
     .logo img{width:36px; height:36px; object-fit:contain}
-    .navlinks a{color:var(--ink); text-decoration:none; margin:0 10px; font-weight:600}
+    .navlinks{display:flex; align-items:flex-start; gap:16px; flex-wrap:wrap}
+    .navlinks>a{color:var(--ink); text-decoration:none; font-weight:600; padding:6px 0}
+    .nav-group{position:relative}
+    .nav-label{background:none; border:0; padding:6px 0; font:inherit; font-weight:600; color:var(--ink); cursor:pointer; display:inline-flex; align-items:center; gap:4px}
+    .nav-label:focus-visible{outline:3px solid rgba(22,163,74,.3); border-radius:6px}
+    .nav-label::after{content:"▾"; font-size:.7rem}
+    .nav-sub{position:absolute; top:calc(100% + 8px); left:0; margin:0; padding:10px 0; list-style:none; background:#fff; border:1px solid var(--border); border-radius:12px; min-width:200px; box-shadow:0 12px 28px rgba(15,23,42,.12); opacity:0; pointer-events:none; transform:translateY(6px); transition:opacity .18s ease, transform .18s ease; z-index:60}
+    .nav-sub li{margin:0}
+    .nav-sub a{display:block; padding:8px 18px; text-decoration:none; color:var(--ink); font-weight:600}
+    .nav-sub a:hover,.nav-sub a:focus{background:#f3f4f6}
+    .nav-group:hover .nav-sub,.nav-group:focus-within .nav-sub{opacity:1; pointer-events:auto; transform:translateY(0)}
     .btn{display:inline-block; padding:10px 15px; border-radius:10px; text-decoration:none; font-weight:700; line-height:1}
     .btn.primary{background:var(--brand); color:#fff}
     .btn.ghost{border:1px solid var(--border); color:var(--ink); background:#fff}
@@ -68,6 +78,13 @@
     .hero-qr{display:flex; flex-direction:column; gap:8px; align-items:center; text-align:center; background:#fff; border:1px solid rgba(22,163,74,.18); border-radius:16px; padding:14px 16px; box-shadow:0 10px 24px rgba(0,0,0,.08)}
     .hero-qr img{width:240px; height:240px; border-radius:12px; border:1px solid rgba(0,0,0,.08); object-fit:cover}
     .hero-qr span{font-size:.9rem; color:#166534; font-weight:600}
+    @media (max-width:720px){
+      .nav{flex-direction:column; align-items:flex-start; gap:12px}
+      .navlinks{width:100%}
+      .nav-group{width:100%}
+      .nav-sub{position:static; opacity:1; pointer-events:auto; transform:none; box-shadow:none; border:none; background:transparent; padding:6px 0 0 12px}
+      .nav-sub a{padding:6px 0}
+    }
     @media (max-width:640px){
       .hero-actions{flex-direction:column; align-items:stretch}
       .hero-qr{width:100%}
@@ -95,6 +112,9 @@
     .fab:focus-visible{outline:3px solid #fff; outline-offset:3px}
 
     .card{background:#fff; border:1px solid var(--border); border-radius:14px; padding:18px}
+    .card h3{margin-top:0}
+    .card h3 a{color:inherit; text-decoration:none}
+    .card h3 a:hover,.card h3 a:focus{color:var(--brand)}
     ul.clean{margin:8px 0 0 1em; padding:0}
     ul.clean li{margin:.25em 0}
 
@@ -121,11 +141,25 @@
       </div>
       <nav class="navlinks" aria-label="主要ナビゲーション">
         <a href="#about">AkarI Labとは</a>
-        <a href="#services">サービス</a>
-        <a href="#projects">プロジェクト</a>
-        <a href="#roadmap">今後の展開</a>
-        <a href="#demo">デモ</a>
-        <a href="#how">使い方</a>
+        <div class="nav-group">
+          <button type="button" class="nav-label">サービス</button>
+          <ul class="nav-sub">
+            <li><a href="#services">サービス概要</a></li>
+            <li><a href="#demo">デモ</a></li>
+            <li><a href="#how">使い方</a></li>
+          </ul>
+        </div>
+        <div class="nav-group">
+          <button type="button" class="nav-label">プロジェクト</button>
+          <ul class="nav-sub">
+            <li><a href="#projects">現在のプロジェクト</a></li>
+            <li><a href="/akarilab/projects/food.html">食習慣サポートAI</a></li>
+            <li><a href="/akarilab/projects/mood.html">モヤログ</a></li>
+            <li><a href="/akarilab/projects/cs.html">AIクレーム分析</a></li>
+            <li><a href="/akarilab/projects/learn.html">学習伴走Bot</a></li>
+            <li><a href="#roadmap">今後の展開</a></li>
+          </ul>
+        </div>
         <a href="#contact">お問い合わせ</a>
       </nav>
       <div>
@@ -218,7 +252,7 @@
 
       <div class="grid-3 mt-16">
         <div class="card">
-          <h3>食習慣サポートAI（β）</h3>
+          <h3><a href="/akarilab/projects/food.html">食習慣サポートAI（β）</a></h3>
           <p>撮って送るだけ。OK/修正で記録が整い、継続しやすさを最優先に設計。</p>
           <ul class="clean">
             <li>要約＋栄養目安の即時返信</li>
@@ -228,20 +262,20 @@
         </div>
 
         <div class="card">
-          <h3>モヤログ（感情ログ）</h3>
+          <h3><a href="/akarilab/projects/mood.html">モヤログ（感情ログ）</a></h3>
           <p>1分で感情を見える化 → やさしい仮説 → 1分行動。心の“整え”を日常習慣に。</p>
           <span class="chip">Designing</span>
         </div>
 
         <div class="card">
-          <h3>AIクレーム分析システム</h3>
+          <h3><a href="/akarilab/projects/cs.html">AIクレーム分析システム</a></h3>
           <p>店舗・業態別に課題抽出と改善案を自動提示。CS会議を“整った意思決定”へ。</p>
           <span class="chip">PoC</span>
         </div>
       </div>
 
       <div class="card mt-16">
-        <h3>学習伴走Bot（小4〜中3）</h3>
+        <h3><a href="/akarilab/projects/learn.html">学習伴走Bot（小4〜中3）</a></h3>
         <p>対話で“わかるまで”。戻り学習を恥ずかしくない設計で、考える力を育む。</p>
         <span class="chip">MVP準備中</span>
       </div>

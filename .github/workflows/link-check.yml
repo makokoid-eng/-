@@ -1,0 +1,22 @@
+name: Link Checker
+
+on:
+  pull_request:
+    paths:
+      - 'site/**/*.html'
+      - 'site/**/*.md'
+      - '.github/workflows/link-check.yml'
+
+jobs:
+  lychee:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run lychee on site artifacts
+        if: ${{ hashFiles('site/**/*.html', 'site/**/*.md') != '' }}
+        uses: lycheeverse/lychee-action@v1
+        with:
+          args: --verbose --no-progress --timeout 20 --include-fragments site/**/*.html site/**/*.md
+      - name: Skip link check (no site artifacts)
+        if: ${{ hashFiles('site/**/*.html', 'site/**/*.md') == '' }}
+        run: echo "No site directory artifacts detected. Skipping lychee run."
