@@ -112,7 +112,7 @@ async function saveMealResult({ userId, imageBytes, result, meta }) {
       imageBytes: typeof imageBytes === 'number' ? imageBytes : null, // 画像本体は保存しない
       model: 'gpt-4o-mini',
       createdAt: FieldValue.serverTimestamp(),
-      meta: meta ?? {},
+      meta: meta || {},
     };
 
     await docRef.set(payload);
