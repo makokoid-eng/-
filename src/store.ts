@@ -1,10 +1,13 @@
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { FieldValue, Firestore, getFirestore } from 'firebase-admin/firestore';
 
+import type { SourceKind } from './line-source.js';
+
 interface LogQueuedInput {
   userId: string;
   kind: string;
   messageId?: string;
+  sourceKind?: SourceKind;
 }
 
 interface LogDoneExtra {
@@ -29,6 +32,7 @@ export async function logQueued(input: LogQueuedInput): Promise<string> {
     userId: input.userId,
     kind: input.kind,
     messageId: input.messageId ?? null,
+    sourceKind: input.sourceKind ?? null,
     error: null,
     resultSummary: null,
     latencyMs: null
