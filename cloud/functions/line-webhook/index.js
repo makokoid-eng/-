@@ -157,6 +157,57 @@ async function canarySave(userId) {
   console.log('stage: firestore canary saved', docRef.path);
 }
 
+async function handleTextCommand({ event, text, senderId, replyToken }) {
+  const normalizedText = (text || '').trim().toLowerCase();
+  console.log('stage: text event received =', normalizedText);
+
+  if (!normalizedText) {
+    console.log('stage: handleTextCommand return=', false);
+    return false;
+  }
+
+  if (normalizedText === 'id') {
+    console.log('stage: id matched');
+    if (replyToken) {
+      const mode = event?.source?.type || 'unknown';
+      const replyStatus = await replyLine(
+        replyToken,
+        `senderId=${senderId || '(missing)'}\nsource=${mode}`,
+      );
+      console.log('reply status=', replyStatus);
+    }
+    console.log('stage: handleTextCommand return=', true);
+    return true;
+  }
+
+  if (normalizedText === 'ping save') {
+    console.log('stage: ping save received');
+    if (!senderId) {
+      console.warn('stage: firestore skip - senderId missing');
+      if (replyToken) {
+        const replyStatus = await replyLine(
+          replyToken,
+          '⚠️ senderId が取得できませんでした',
+        );
+        console.log('reply status=', replyStatus);
+      }
+      console.log('stage: handleTextCommand return=', true);
+      return true;
+    }
+
+    await canarySave(senderId);
+    if (replyToken) {
+      const replyStatus = await replyLine(replyToken, '✅保存テストOK');
+      console.log('reply status=', replyStatus);
+    }
+    console.log('stage: handleTextCommand return=', true);
+    return true;
+  }
+
+  console.log('stage: handleTextCommand return=', false);
+  return false;
+}
+
 async function summarizeMealFromBase64(imageBase64) {
   console.log('stage: ai start');
   if (!openai) throw new Error('OPENAI client not initialized');
@@ -239,7 +290,7 @@ const app = async (req, res) => {
 
   try {
     const isText = ev?.type === 'message' && ev?.message?.type === 'text';
-    const text = (ev?.message?.text || '').trim().toLowerCase();
+    const text = ev?.message?.text || '';
     const replyToken = ev.replyToken;
     const senderId = getSenderId(ev?.source);
 
@@ -267,26 +318,14 @@ const app = async (req, res) => {
     );
 
     if (isText) {
-      console.log('stage: text event received =', text);
-      if (text.replace(/\s+/g, '') === 'pingsave') {
-        if (!senderId) {
-          console.warn('stage: firestore skip - senderId missing');
-          if (replyToken) {
-            const replyStatus = await replyLine(
-              replyToken,
-              '⚠️ senderId が取得できませんでした',
-            );
-            console.log('reply status=', replyStatus);
-          }
-          return res.sendStatus(200);
-        }
-
-        await canarySave(senderId);
-        if (replyToken) {
-          const replyStatus = await replyLine(replyToken, '✅保存テストOK');
-          console.log('reply status=', replyStatus);
-        }
-        return res.sendStatus(200);
+      const handledTextCommand = await handleTextCommand({
+        event: ev,
+        text,
+        senderId,
+        replyToken,
+      });
+      if (handledTextCommand) {
+        return res.status(200).send('ok');
       }
     }
 
