@@ -95,10 +95,12 @@ jobs:
             --allow-unauthenticated \
             --service-account="${RUNTIME_SA}" \
             --set-env-vars="LINE_CHANNEL_SECRET=${LINE_CHANNEL_SECRET},LINE_CHANNEL_ACCESS_TOKEN=${LINE_CHANNEL_ACCESS_TOKEN},OPENAI_API_KEY=${OPENAI_API_KEY},FEATURE_REPLY_V1=true,FIRESTORE_ROOT=users" \
+            --cpu=1 \
+            --memory=512Mi \
             --concurrency=10 \
             --max-instances=5 \
             --timeout=60 \
-            --source="${GITHUB_WORKSPACE}/cloud/functions/line-webhook"
+            --source="${{ github.workspace }}/cloud/functions/line-webhook"
 
       - name: Show function URL
         run: |
