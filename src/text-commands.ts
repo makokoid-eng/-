@@ -4,7 +4,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { getSenderId, getSourceKind } from './line-source.js';
 import { getDb } from './firebase-admin.js';
 
-type ReplyMessage = (replyToken: string, message: Message | Message[]) => Promise<void>;
+export type ReplyMessage = (replyToken: string, message: Message | Message[]) => Promise<void>;
 
 export async function handleTextCommand(event: WebhookEvent, replyMessage: ReplyMessage): Promise<boolean> {
   if (event.type !== 'message' || event.message.type !== 'text') {
