@@ -6,7 +6,8 @@ import { runAiPipeline } from './ai.js';
 import { logDone, logError, logQueued } from './store.js';
 import { appendRow } from './sheets_legacy.js';
 import { getSenderId, getSourceKind } from './line-source.js';
-import { handleTextCommand } from './text-commands.js';
+import { handleFollow } from './follow.js';
+import { handleTextCommand, type ReplyMessage } from './text-commands.js';
 import { saveMealResult } from './meals.js';
 
 interface TaskPayload {
@@ -31,12 +32,22 @@ app.get('/healthz', (_req: Request, res: Response) => {
   res.status(200).send('ok');
 });
 
+const replyMessage: ReplyMessage = async (replyToken, message) => {
+  const messages = Array.isArray(message) ? message : [message];
+  await lineClient.replyMessage(replyToken, messages);
+};
+
 app.post('/line/webhook', middleware(lineConfig), async (req: Request, res: Response) => {
   const events = (req.body.events ?? []) as WebhookEvent[];
 
   await Promise.all(
     events.map(async (event) => {
       try {
+        const handledFollow = await handleFollow(event, lineClient, replyMessage);
+        if (handledFollow) {
+          return;
+        }
+
         if (event.type !== 'message') {
           return;
         }
@@ -53,10 +64,7 @@ app.post('/line/webhook', middleware(lineConfig), async (req: Request, res: Resp
         }
 
         if (event.message.type === 'text') {
-          const handled = await handleTextCommand(event, async (token, message) => {
-            const messages = Array.isArray(message) ? message : [message];
-            await lineClient.replyMessage(token, messages);
-          });
+          const handled = await handleTextCommand(event, replyMessage);
           if (handled) {
             return;
           }
