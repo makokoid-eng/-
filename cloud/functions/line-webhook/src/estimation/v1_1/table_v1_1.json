@@ -1,0 +1,7 @@
+{
+  "salad":{"density_g_per_ml":0.25,"protein_per_100g":1.2,"fiber_per_100g":2.0,"kcal_per_100g":20},
+  "rice":{"density_g_per_ml":0.96,"protein_per_100g":2.5,"fiber_per_100g":0.3,"kcal_per_100g":168},
+  "meat":{"density_g_per_ml":1.05,"protein_per_100g":20,"fiber_per_100g":0.0,"kcal_per_100g":240},
+  "fish":{"density_g_per_ml":1.03,"protein_per_100g":22,"fiber_per_100g":0.0,"kcal_per_100g":200},
+  "tofu":{"density_g_per_ml":1.00,"protein_per_100g":7.0,"fiber_per_100g":0.3,"kcal_per_100g":72}
+}
