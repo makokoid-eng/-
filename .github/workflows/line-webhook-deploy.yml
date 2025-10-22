@@ -25,23 +25,28 @@ jobs:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     steps:
+      # --- 1. Checkout ソース取得
       - name: Checkout
         uses: actions/checkout@v4
 
+      # --- 2. Node.js セットアップ
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
+      # --- 3. gcloud CLI をセットアップ
       - name: Install gcloud
         uses: google-github-actions/setup-gcloud@v2
 
+      # --- 4. Google Cloud 認証(JSON key)
       - name: Authenticate to Google Cloud (JSON key)
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
-        # Auth method switched to JSON key for personal project (no organization)
+        # 個人PJのため Workload Identity Federation は使用しない
 
+      # --- 5. gcloud 初期化
       - name: gcloud init
         run: |
           set -euo pipefail
@@ -49,7 +54,8 @@ jobs:
           gcloud config set functions/region "${REGION}"
           gcloud --version
 
-      - name: "Preflight: check service account"
+      # --- 6. SA存在チェック
+      - name: Preflight: check service account
         run: |
           set -euo pipefail
           echo "PROJECT_ID=${PROJECT_ID}"
@@ -58,16 +64,18 @@ jobs:
             --format="value(email)" >/dev/null
           echo "✔ Service Account exists"
 
-      - name: "Preflight: ensure package.json exists"
+      # --- 7. package.json 存在チェック
+      - name: Preflight: ensure package.json exists
         working-directory: cloud/functions/line-webhook
         run: |
           set -euo pipefail
           if [ ! -f package.json ]; then
-            echo "package.json not found in $(pwd)" >&2
+            echo "❌ package.json not found in $(pwd)" >&2
             exit 1
           fi
           echo "✔ package.json found"
 
+      # --- 8. 依存関係インストール
       - name: Install dependencies (function)
         working-directory: cloud/functions/line-webhook
         run: |
@@ -82,23 +90,30 @@ jobs:
             npm install
           fi
 
+      # --- 9. デプロイ本体
       - name: Deploy Cloud Functions v2 (line-webhook)
         working-directory: cloud/functions/line-webhook
         run: |
           set -euo pipefail
-         gcloud functions deploy line-webhook \
-  --gen2 \
-  --region=asia-northeast1 \
-  --runtime=nodejs20 \
-  --service-account=${{ secrets.GCP_RUNTIME_SA }} \
-  --set-env-vars "FEATURE_REPLY_V1=true,FIRESTORE_ROOT=users" \
-  --concurrency=1 \
-  --max-instances=5 \
-  --timeout=60 \
-  --source=${{ github.workspace }}/cloud/functions/line-webhook
+          echo "▶ Deploying Cloud Functions (v2)"
+          gcloud functions deploy line-webhook \
+            --gen2 \
+            --region=asia-northeast1 \
+            --runtime=nodejs20 \
+            --service-account=${{ secrets.GCP_RUNTIME_SA }} \
+            --set-env-vars "FEATURE_REPLY_V1=true,FIRESTORE_ROOT=users" \
+            --concurrency=1 \
+            --max-instances=5 \
+            --timeout=60 \
+            --source=${{ github.workspace }}/cloud/functions/line-webhook
+          echo "✅ Deploy completed"
 
+      # --- 10. Function URL 表示
       - name: Show function URL
         run: |
-          URL=$(gcloud functions describe "${FUNCTION_NAME}" --region="${REGION}" --format="value(serviceConfig.uri)")
+          set -euo pipefail
+          URL=$(gcloud functions describe "${FUNCTION_NAME}" \
+            --region="${REGION}" \
+            --format="value(serviceConfig.uri)")
           echo "FUNCTION_URL=${URL}"
           echo "FUNCTION_URL=${URL}" >> $GITHUB_OUTPUT
