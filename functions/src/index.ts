@@ -1,107 +1,113 @@
-import * as functions from 'firebase-functions';
-import axios from 'axios';
-import './firebase';
+import * as functions from "firebase-functions";
+import axios from "axios";
+import * as admin from "firebase-admin";
 
-type LineTextMessageEvent = {
-  replyToken?: string;
-  type?: string;
-  message?: {
-    type?: string;
-    text?: string;
-  };
-};
+// admin 初期化は一度だけ
+if (!admin.apps.length) admin.initializeApp();
+const db = admin.firestore();
 
-type LineWebhookRequest = {
-  events?: LineTextMessageEvent[];
-};
+/** 受信→即返信（動作確認用） */
+export const lineWebhook = functions.https.onRequest(async (req, res) => {
+  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+  const events = req.body?.events || [];
 
-export const lineWebhook = functions.https.onRequest(async (req: functions.https.Request, res: functions.Response) => {
-  if (req.method !== 'POST') {
-    res.set('Allow', 'POST');
-    return res.sendStatus(405);
-  }
-
-  const accessToken = functions.config().line?.token;
-  if (!accessToken) {
-    functions.logger.error('LINE access token is not configured.');
-    return res.sendStatus(500);
-  }
-
-  const body = (req.body ?? {}) as LineWebhookRequest;
-  const events = Array.isArray(body.events) ? body.events : [];
-
-  for (const event of events) {
-    if (
-      event?.type === 'message' &&
-      event.replyToken &&
-      event.message?.type === 'text' &&
-      typeof event.message.text === 'string'
-    ) {
-      try {
-        await axios.post(
-          'https://api.line.me/v2/bot/message/reply',
-          {
-            replyToken: event.replyToken,
-            messages: [
-              {
-                type: 'text',
-                text: `受け取りました：${event.message.text}`,
-              },
-            ],
+  for (const e of events) {
+    if (e.type === "message" && e.message.type === "text") {
+      await axios.post(
+        "https://api.line.me/v2/bot/message/reply",
+        {
+          replyToken: e.replyToken,
+          messages: [{ type: "text", text: `受け取りました：${e.message.text}` }],
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${functions.config().line.token}`,
           },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${accessToken}`,
-            },
-          },
-        );
-      } catch (error) {
-        functions.logger.error('Failed to reply to LINE message.', error);
-      }
+        }
+      );
     }
   }
-
   return res.sendStatus(200);
 });
 
-type GenerateDiaryRequestBody = {
-  theme?: unknown;
-  toneHint?: unknown;
-};
-
-const toneHints = ['ふわっと', '大人', '語尾弱め'] as const;
-
+/** モック生成API（3案返す） */
 export const generateDiary = functions.https.onRequest(async (req, res) => {
-  if (req.method !== 'POST') {
-    res.set('Allow', 'POST');
-    return res.status(405).send('Method Not Allowed');
-  }
+  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+  const { theme = "", toneHint = "ふわっと" } = req.body ?? {};
+  if (!theme) return res.status(400).json({ error: "theme is required" });
 
+  const t = String(theme).trim();
+  const tail =
+    toneHint === "大人"
+      ? "静かな余韻をそっと置いておく。"
+      : toneHint === "語尾弱め"
+      ? "気持ちは短く、伝わるように。"
+      : "また重なるタイミングを楽しみに。";
+
+  const variants = [
+    `空気がやわらぐ${t}。深呼吸で整える夜。${tail}`,
+    `灯りの粒が静かに揺れる${t}。無理のない歩幅で。${tail}`,
+    `${t}。言葉少なめの方が届く夜もある。${tail}`,
+  ];
+  return res.json({ variants });
+});
+
+/** 保存API：visit + draft を同時に作成 */
+export const saveDiary = functions.https.onRequest(async (req, res) => {
+  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
   try {
-    const body = (req.body ?? {}) as GenerateDiaryRequestBody;
-    const rawTheme = typeof body.theme === 'string' ? body.theme.trim() : '';
-    const rawToneHint = typeof body.toneHint === 'string' ? body.toneHint.trim() : undefined;
+    const body = (req.body ?? {}) as {
+      userId?: string;
+      customer?: { nickname?: string };
+      memo?: string;
+      tags?: string[];
+      theme: string;
+      strength: "soft" | "normal" | "hard";
+      emojiLevel: number;
+      toneHint: string;
+      draftText: string;
+    };
 
-    if (!rawTheme) {
-      return res.status(400).json({ error: 'theme is required' });
+    const headerUid = (req.headers["x-mock-uid"] as string) || undefined;
+    const uid = body.userId || headerUid || "demo";
+
+    if (!body.theme || !body.draftText) {
+      return res
+        .status(400)
+        .json({ error: "theme and draftText are required" });
     }
 
-    if (rawToneHint && !toneHints.includes(rawToneHint as (typeof toneHints)[number])) {
-      return res.status(400).json({ error: 'toneHint is invalid' });
-    }
+    // visits へ保存
+    const visitRef = await db
+      .collection("users")
+      .doc(uid)
+      .collection("visits")
+      .add({
+        customerNickname: body.customer?.nickname ?? null,
+        memo: body.memo ?? null,
+        tags: Array.isArray(body.tags) ? body.tags : [],
+        theme: body.theme,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
 
-    const toneHint = rawToneHint as (typeof toneHints)[number] | undefined;
+    // diary_drafts へ保存
+    const draftRef = await db
+      .collection("users")
+      .doc(uid)
+      .collection("diary_drafts")
+      .add({
+        sourceVisitId: visitRef.id,
+        draftText: body.draftText,
+        toneHint: body.toneHint,
+        strength: body.strength,
+        emojiLevel: body.emojiLevel,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
 
-    // TODO: Replace mock generation with OpenAI API call using functions.config().openai.key
-    const variants = Array.from({ length: 3 }).map((_, index) => {
-      const toneLabel = toneHint ? `トーン「${toneHint}」` : '標準トーン';
-      return `${index + 1}つ目の案：${toneLabel}でテーマ「${rawTheme}」の日記を綴る下書きです。`;
-    });
-
-    return res.status(200).json({ variants });
-  } catch (error) {
-    console.error('Failed to generate diary', error);
-    return res.status(500).json({ error: 'internal_error' });
+    return res.json({ ok: true, visitId: visitRef.id, draftId: draftRef.id });
+  } catch (e: any) {
+    console.error(e);
+    return res.status(500).json({ error: e?.message ?? "internal error" });
   }
 });
