@@ -64,3 +64,44 @@ export const lineWebhook = functions.https.onRequest(async (req: functions.https
 
   return res.sendStatus(200);
 });
+
+type GenerateDiaryRequestBody = {
+  theme?: unknown;
+  toneHint?: unknown;
+};
+
+const toneHints = ['ふわっと', '大人', '語尾弱め'] as const;
+
+export const generateDiary = functions.https.onRequest(async (req, res) => {
+  if (req.method !== 'POST') {
+    res.set('Allow', 'POST');
+    return res.status(405).send('Method Not Allowed');
+  }
+
+  try {
+    const body = (req.body ?? {}) as GenerateDiaryRequestBody;
+    const rawTheme = typeof body.theme === 'string' ? body.theme.trim() : '';
+    const rawToneHint = typeof body.toneHint === 'string' ? body.toneHint.trim() : undefined;
+
+    if (!rawTheme) {
+      return res.status(400).json({ error: 'theme is required' });
+    }
+
+    if (rawToneHint && !toneHints.includes(rawToneHint as (typeof toneHints)[number])) {
+      return res.status(400).json({ error: 'toneHint is invalid' });
+    }
+
+    const toneHint = rawToneHint as (typeof toneHints)[number] | undefined;
+
+    // TODO: Replace mock generation with OpenAI API call using functions.config().openai.key
+    const variants = Array.from({ length: 3 }).map((_, index) => {
+      const toneLabel = toneHint ? `トーン「${toneHint}」` : '標準トーン';
+      return `${index + 1}つ目の案：${toneLabel}でテーマ「${rawTheme}」の日記を綴る下書きです。`;
+    });
+
+    return res.status(200).json({ variants });
+  } catch (error) {
+    console.error('Failed to generate diary', error);
+    return res.status(500).json({ error: 'internal_error' });
+  }
+});
