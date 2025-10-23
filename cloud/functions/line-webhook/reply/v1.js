@@ -17,30 +17,36 @@ const formatIngredients = (ingredients) => {
   return `主な具材: ${normalized.slice(0, 5).join('・')}`;
 };
 
-const formatDecimal = (value, digits = 1) => {
-  if (!isFiniteNumber(value)) return null;
-  const factor = 10 ** digits;
-  const rounded = Math.round(value * factor) / factor;
-  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(digits);
-};
+const g = (v) => (v == null ? '—' : v <= 0 ? 'ごく少量(≦5g)' : `${v} g`);
+const kcal = (v) => (v == null ? '—' : v <= 0 ? '少なめ' : `${v} kcal`);
 
 const formatEstimatesBlock = (estimates) => {
   if (!estimates || typeof estimates !== 'object') return null;
 
   const parts = [];
-  const vegetables = formatDecimal(estimates.vegetables_g);
-  if (vegetables) parts.push(`野菜 ${vegetables}g`);
-
-  const protein = formatDecimal(estimates.protein_g);
-  if (protein) parts.push(`たんぱく質 ${protein}g`);
-
-  const fiber = formatDecimal(estimates.fiber_g);
-  if (fiber) parts.push(`食物繊維 ${fiber}g`);
-
-  const calories = isFiniteNumber(estimates.calories_kcal)
-    ? Math.round(estimates.calories_kcal).toString()
+  const vegetablesValue = isFiniteNumber(estimates.vegetables_g)
+    ? Math.round(estimates.vegetables_g)
     : null;
-  if (calories) parts.push(`エネルギー ${calories}kcal`);
+  const vegetables = g(vegetablesValue);
+  if (vegetables !== '—') parts.push(`野菜 ${vegetables}`);
+
+  const proteinValue = isFiniteNumber(estimates.protein_g)
+    ? Math.round(estimates.protein_g)
+    : null;
+  const protein = g(proteinValue);
+  if (protein !== '—') parts.push(`たんぱく質 ${protein}`);
+
+  const fiberValue = isFiniteNumber(estimates.fiber_g)
+    ? Math.round(estimates.fiber_g)
+    : null;
+  const fiber = g(fiberValue);
+  if (fiber !== '—') parts.push(`食物繊維 ${fiber}`);
+
+  const caloriesValue = isFiniteNumber(estimates.calories_kcal)
+    ? Math.round(estimates.calories_kcal)
+    : null;
+  const calories = kcal(caloriesValue);
+  if (calories !== '—') parts.push(`エネルギー ${calories}`);
 
   const lines = ['📏 量の目安'];
   if (parts.length > 0) {

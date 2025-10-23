@@ -5,6 +5,7 @@ import { Firestore, FieldValue } from '@google-cloud/firestore';
 import { handleFollow } from './handlers/follow.js';
 import { estimateScale } from './src/estimation/v1_1/scale.js';
 import { estimateNutrition } from './src/estimation/v1_1/estimate.js';
+import { normalizeKind } from './src/estimation/v1_1/normalizeKind.js';
 import { formatReplyV1 } from './reply/v1.js';
 
 // プロジェクトIDは自動検出でOK。明示したい場合は projectId を渡す。
@@ -385,45 +386,73 @@ const app = async (req, res) => {
         const components = Array.isArray(vision?.components)
           ? vision.components
           : [];
+        const ingredients = Array.isArray(result?.ingredients)
+          ? result.ingredients
+          : [];
         console.log('v1.1 scaleCandidates.len=', scaleCandidates.length);
         console.log('v1.1 components.len=', components.length);
 
         try {
           const scale = estimateScale(scaleCandidates);
-          const rawPxmm = Number(scale?.px_per_mm);
-          let pxmm =
-            Number.isFinite(rawPxmm) && rawPxmm !== 0 ? rawPxmm : 3.0;
+          let pxmm = Number(scale?.px_per_mm || 3.0);
+          if (!Number.isFinite(pxmm) || pxmm <= 0) pxmm = 3.0;
           pxmm = Math.min(Math.max(pxmm, 0.8), 10);
+          const toMm2 = (px) => (px || 0) / (pxmm * pxmm);
           console.log('v1.1 px_per_mm=', pxmm);
           const componentsMm = components
-            .map((c) => {
-              const areaPx = Number(c?.area_px);
-              const areaMm2 = Number.isFinite(areaPx)
-                ? areaPx / (pxmm * pxmm)
-                : NaN;
-              return {
-                kind: c?.kind,
-                area_mm2: areaMm2,
-                height_mm: c?.height_mm,
-              };
-            })
+            .map((c) => ({
+              kind: normalizeKind(c?.kind),
+              area_mm2: toMm2(Number(c?.area_px)),
+              height_mm: c?.height_mm,
+            }))
             .filter(
-              (c) => Number.isFinite(c.area_mm2) && c.area_mm2 >= 0,
+              (c) =>
+                c.kind !== 'soup' && Number.isFinite(c.area_mm2) && c.area_mm2 > 50,
             );
-          const nutrition = estimateNutrition(componentsMm);
-          if (nutrition && typeof nutrition === 'object') {
-            nutrition.scale = {
+
+          if (componentsMm.length) {
+            estimates = estimateNutrition(componentsMm);
+          } else {
+            const s = ingredients.join(' ');
+            const comp = [];
+            if (/サラダ|野菜/.test(s))
+              comp.push({ kind: 'salad', area_mm2: 20000, height_mm: 30 });
+            if (/ご飯|米|おにぎり|麺|そうめん|そば|うどん/.test(s))
+              comp.push({ kind: 'rice', area_mm2: 25000, height_mm: 45 });
+            if (/卵|肉|鶏|豚|牛|魚|貝/.test(s))
+              comp.push({
+                kind: /卵/.test(s)
+                  ? 'tofu'
+                  : /魚|貝/.test(s)
+                  ? 'fish'
+                  : 'meat',
+                area_mm2: 12000,
+                height_mm: 18,
+              });
+            estimates = comp.length
+              ? estimateNutrition(comp)
+              : {
+                  vegetables_g: 0,
+                  protein_g: 0,
+                  calories_kcal: 0,
+                  fiber_g: 0,
+                  confidence: 0.4,
+                };
+            console.log('v1.1 fallback.used=true comp.len=', comp.length);
+          }
+
+          if (estimates && typeof estimates === 'object') {
+            estimates.scale = {
               source: scale?.source,
               object_size_mm: scale?.object_size_mm,
               pixels: scale?.pixels,
               px_per_mm: pxmm,
             };
-            nutrition.assumptions = {
+            estimates.assumptions = {
               salad_height_mm: 30,
               rice_height_mm: 45,
               meat_height_mm: 18,
             };
-            estimates = nutrition;
           }
           console.log('v1.1 estimates:', estimates);
         } catch (estimationError) {
