@@ -1,4 +1,4 @@
-disabled-temporarily: manual deploy only
+#disabled-temporarily: manual deploy only
 name: Deploy Firebase Functions
 
 on:
