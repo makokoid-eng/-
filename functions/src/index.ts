@@ -117,6 +117,26 @@ export const saveDiary = functions.https.onRequest(async (req, res) => {
       : [];
     const { theme, strength, emojiLevel, toneHint, draftText } = body;
 
+    if (typeof theme !== 'string' || theme.trim() === '') {
+      return res.status(400).json({ ok: false, error: 'Invalid theme' });
+    }
+
+    if (!['soft', 'normal', 'hard'].includes(strength)) {
+      return res.status(400).json({ ok: false, error: 'Invalid strength' });
+    }
+
+    if (typeof emojiLevel !== 'number') {
+      return res.status(400).json({ ok: false, error: 'Invalid emojiLevel' });
+    }
+
+    if (typeof toneHint !== 'string') {
+      return res.status(400).json({ ok: false, error: 'Invalid toneHint' });
+    }
+
+    if (typeof draftText !== 'string') {
+      return res.status(400).json({ ok: false, error: 'Invalid draftText' });
+    }
+
     const visitRef = await db
       .collection('users')
       .doc(uid)
