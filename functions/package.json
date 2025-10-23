@@ -1,0 +1,17 @@
+{
+  "name": "akarilab-functions",
+  "version": "1.0.0",
+  "private": true,
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "firebase-functions": "^4.8.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
