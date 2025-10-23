@@ -83,39 +83,6 @@ Google Cloud Functions Gen2（Node.js 20 / TypeScript）と Cloud Tasks を利�
    scripts/deploy_gcf.sh
    ```
 
-## 設定手順
-
-### Firebase Functions の環境変数設定
-
-以下のコマンドをローカル環境または CI から実行し、`functions:config` に必要な値を登録します。
-
-```bash
-firebase functions:config:set \
-  line.secret="<LINE_CHANNEL_SECRET>" \
-  line.token="<LINE_CHANNEL_ACCESS_TOKEN>"
-
-# （将来利用予定）OpenAI API キー
-firebase functions:config:set openai.key="<OPENAI_API_KEY>"
-```
-
-### Functions のデプロイ
-
-`functions:config` の更新後、Functions をデプロイします。
-
-```bash
-firebase deploy --only functions
-```
-
-### LINE Developers での Webhook 設定
-
-1. [LINE Developers コンソール](https://developers.line.biz/console/) で対象チャネルを開きます。
-2. 「Messaging API 設定」>「Webhook URL」に、デプロイ済み Functions のエンドポイント（例: `https://asia-northeast1-<PROJECT_ID>.cloudfunctions.net/lineApp/line/webhook`）を入力します。
-3. 「更新」を押して URL を保存します。
-4. 「Verify」をクリックし、Functions から `200 OK` が返ることを確認します。成功した場合は Webhook ステータスが「有効」になります。
-5. 「Webhook を利用する」をオンにして設定を完了します。
-
-> **メモ:** Verify が失敗する場合は、`firebase deploy --only functions` の再実行や `functions:config:get` で値を確認し、`line.secret` と `line.token` が正しく設定されているかをチェックしてください。
-
 ## LINE Developers 設定
 
 - Webhook URL: `https://asia-northeast1-<PROJECT_ID>.cloudfunctions.net/lineApp/line/webhook`
