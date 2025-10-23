@@ -1,174 +1,113 @@
-import * as functions from 'firebase-functions';
-import axios from 'axios';
-import { getFirebaseAdmin } from './firebaseAdmin';
+import * as functions from "firebase-functions";
+import axios from "axios";
+import * as admin from "firebase-admin";
 
-type LineMessage = {
-  id?: string;
-  type: string;
-  text?: string;
-};
+// admin 初期化は一度だけ
+if (!admin.apps.length) admin.initializeApp();
+const db = admin.firestore();
 
-type LineEvent = {
-  replyToken?: string;
-  type: string;
-  message?: LineMessage;
-};
-
-type LineWebhookRequestBody = {
-  events?: LineEvent[];
-};
-
-type SaveDiaryRequestBody = {
-  userId?: string;
-  customer?: {
-    nickname?: string;
-  };
-  memo?: string;
-  tags?: string[];
-  theme: string;
-  strength: 'soft' | 'normal' | 'hard';
-  emojiLevel: number;
-  toneHint: string;
-  draftText: string;
-};
-
-async function replyTextMessage(
-  replyToken: string,
-  messageText: string,
-  accessToken: string,
-): Promise<void> {
-  await axios.post(
-    'https://api.line.me/v2/bot/message/reply',
-    {
-      replyToken,
-      messages: [
-        {
-          type: 'text',
-          text: `受け取りました：${messageText}`,
-        },
-      ],
-    },
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-    },
-  );
-}
-
+/** 受信→即返信（動作確認用） */
 export const lineWebhook = functions.https.onRequest(async (req, res) => {
-  if (req.method !== 'POST') {
-    res.set('Allow', 'POST');
-    return res.status(405).send('Method Not Allowed');
-  }
+  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+  const events = req.body?.events || [];
 
-  const accessToken = functions.config().line?.token;
-  if (!accessToken) {
-    console.error('LINE access token is not configured.');
-    return res.status(500).send('Configuration error');
-  }
-
-  const body = (req.body ?? {}) as LineWebhookRequestBody;
-  const events = Array.isArray(body.events) ? body.events : [];
-
-  for (const event of events) {
-    if (
-      event.type === 'message' &&
-      event.replyToken &&
-      event.message?.type === 'text' &&
-      typeof event.message.text === 'string'
-    ) {
-      try {
-        await replyTextMessage(event.replyToken, event.message.text, accessToken);
-      } catch (error) {
-        console.error('Failed to reply to LINE message', error);
-      }
+  for (const e of events) {
+    if (e.type === "message" && e.message.type === "text") {
+      await axios.post(
+        "https://api.line.me/v2/bot/message/reply",
+        {
+          replyToken: e.replyToken,
+          messages: [{ type: "text", text: `受け取りました：${e.message.text}` }],
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${functions.config().line.token}`,
+          },
+        }
+      );
     }
   }
-
-  return res.status(200).send('ok');
+  return res.sendStatus(200);
 });
 
+/** モック生成API（3案返す） */
+export const generateDiary = functions.https.onRequest(async (req, res) => {
+  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+  const { theme = "", toneHint = "ふわっと" } = req.body ?? {};
+  if (!theme) return res.status(400).json({ error: "theme is required" });
+
+  const t = String(theme).trim();
+  const tail =
+    toneHint === "大人"
+      ? "静かな余韻をそっと置いておく。"
+      : toneHint === "語尾弱め"
+      ? "気持ちは短く、伝わるように。"
+      : "また重なるタイミングを楽しみに。";
+
+  const variants = [
+    `空気がやわらぐ${t}。深呼吸で整える夜。${tail}`,
+    `灯りの粒が静かに揺れる${t}。無理のない歩幅で。${tail}`,
+    `${t}。言葉少なめの方が届く夜もある。${tail}`,
+  ];
+  return res.json({ variants });
+});
+
+/** 保存API：visit + draft を同時に作成 */
 export const saveDiary = functions.https.onRequest(async (req, res) => {
-  if (req.method !== 'POST') {
-    res.set('Allow', 'POST');
-    return res.status(405).send('Method Not Allowed');
-  }
-
+  if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
   try {
-    const body = (req.body ?? {}) as SaveDiaryRequestBody;
-    const admin = getFirebaseAdmin();
-    const db = admin.firestore();
+    const body = (req.body ?? {}) as {
+      userId?: string;
+      customer?: { nickname?: string };
+      memo?: string;
+      tags?: string[];
+      theme: string;
+      strength: "soft" | "normal" | "hard";
+      emojiLevel: number;
+      toneHint: string;
+      draftText: string;
+    };
 
-    const explicitUserId = typeof body.userId === 'string' ? body.userId.trim() : '';
-    const headerUserId = req.headers['x-mock-uid'];
-    const headerUserIdValue = Array.isArray(headerUserId)
-      ? headerUserId[0]
-      : typeof headerUserId === 'string'
-      ? headerUserId
-      : '';
-    const uid = explicitUserId || headerUserIdValue || 'demo';
+    const headerUid = (req.headers["x-mock-uid"] as string) || undefined;
+    const uid = body.userId || headerUid || "demo";
 
-    const customerNickname = body.customer?.nickname ?? null;
-    const memo = typeof body.memo === 'string' ? body.memo : null;
-    const tags = Array.isArray(body.tags)
-      ? body.tags.filter((tag): tag is string => typeof tag === 'string')
-      : [];
-    const { theme, strength, emojiLevel, toneHint, draftText } = body;
-
-    if (typeof theme !== 'string' || theme.trim() === '') {
-      return res.status(400).json({ ok: false, error: 'Invalid theme' });
+    if (!body.theme || !body.draftText) {
+      return res
+        .status(400)
+        .json({ error: "theme and draftText are required" });
     }
 
-    if (!['soft', 'normal', 'hard'].includes(strength)) {
-      return res.status(400).json({ ok: false, error: 'Invalid strength' });
-    }
-
-    if (typeof emojiLevel !== 'number') {
-      return res.status(400).json({ ok: false, error: 'Invalid emojiLevel' });
-    }
-
-    if (typeof toneHint !== 'string') {
-      return res.status(400).json({ ok: false, error: 'Invalid toneHint' });
-    }
-
-    if (typeof draftText !== 'string') {
-      return res.status(400).json({ ok: false, error: 'Invalid draftText' });
-    }
-
+    // visits へ保存
     const visitRef = await db
-      .collection('users')
+      .collection("users")
       .doc(uid)
-      .collection('visits')
+      .collection("visits")
       .add({
-        customerNickname,
-        memo,
-        tags,
-        theme,
+        customerNickname: body.customer?.nickname ?? null,
+        memo: body.memo ?? null,
+        tags: Array.isArray(body.tags) ? body.tags : [],
+        theme: body.theme,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
+    // diary_drafts へ保存
     const draftRef = await db
-      .collection('users')
+      .collection("users")
       .doc(uid)
-      .collection('diary_drafts')
+      .collection("diary_drafts")
       .add({
         sourceVisitId: visitRef.id,
-        draftText,
-        toneHint,
-        strength,
-        emojiLevel,
+        draftText: body.draftText,
+        toneHint: body.toneHint,
+        strength: body.strength,
+        emojiLevel: body.emojiLevel,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-    return res.status(200).json({
-      ok: true,
-      visitId: visitRef.id,
-      draftId: draftRef.id,
-    });
-  } catch (error) {
-    console.error('Failed to save diary', error);
-    return res.status(500).json({ ok: false });
+    return res.json({ ok: true, visitId: visitRef.id, draftId: draftRef.id });
+  } catch (e: any) {
+    console.error(e);
+    return res.status(500).json({ error: e?.message ?? "internal error" });
   }
 });
