@@ -1,0 +1,96 @@
+name: Deploy Repi LINE webhook to Cloud Functions
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'cloud/functions/repi-webhook/**'
+      - '.github/workflows/line-repi-deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      REGION: ${{ vars.GCP_REGION }}
+      FUNCTION_NAME: ${{ vars.GCP_LINE_FUNCTION_NAME_REPI }}
+      RUNTIME_SA: ${{ vars.GCP_RUNTIME_SA }}
+      LINE_CHANNEL_SECRET_REPI: ${{ secrets.LINE_CHANNEL_SECRET_REPI }}
+      LINE_CHANNEL_ACCESS_TOKEN_REPI: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN_REPI }}
+      FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Authenticate to Google Cloud (JSON key)
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: "gcloud init"
+        run: |
+          set -euo pipefail
+          gcloud config set project "${PROJECT_ID}"
+          gcloud config set functions/region "${REGION}"
+          gcloud --version
+
+      - name: "Preflight: check service account"
+        run: |
+          set -euo pipefail
+          echo "PROJECT_ID=${PROJECT_ID}"
+          echo "RUNTIME_SA=${RUNTIME_SA}"
+          gcloud iam service-accounts describe "${RUNTIME_SA}" --format="value(email)" >/dev/null
+          echo "OK: service account exists"
+
+      - name: "Preflight: ensure package.json exists"
+        run: |
+          set -euo pipefail
+          SOURCE="${{ github.workspace }}/cloud/functions/repi-webhook"
+          echo "SOURCE=${SOURCE}"
+          test -f "${SOURCE}/package.json" || { echo "package.json not found under ${SOURCE}"; exit 1; }
+          echo "OK: package.json found"
+
+      - name: Install dependencies (function)
+        working-directory: cloud/functions/repi-webhook
+        run: |
+          set -euo pipefail
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: "Deploy Cloud Functions v2 (repi-webhook)"
+        run: |
+          set -euo pipefail
+          SOURCE="${{ github.workspace }}/cloud/functions/repi-webhook"
+          gcloud functions deploy "${FUNCTION_NAME}" \
+            --gen2 \
+            --region="${REGION}" \
+            --runtime=nodejs20 \
+            --service-account="${RUNTIME_SA}" \
+            --set-env-vars "FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID},LINE_CHANNEL_SECRET_REPI=${{ secrets.LINE_CHANNEL_SECRET_REPI }},LINE_CHANNEL_ACCESS_TOKEN_REPI=${{ secrets.LINE_CHANNEL_ACCESS_TOKEN_REPI }}" \
+            --concurrency=1 \
+            --max-instances=5 \
+            --timeout=60 \
+            --source="${SOURCE}"
+
+      - name: "Show function URL"
+        run: |
+          URL=$(gcloud functions describe "${FUNCTION_NAME}" --region="${REGION}" --format="value(serviceConfig.uri)")
+          echo "FUNCTION_URL=${URL}"
+          echo "FUNCTION_URL=${URL}" >> "$GITHUB_OUTPUT"

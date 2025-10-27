@@ -1,0 +1,12 @@
+{
+  "name": "repi-webhook",
+  "version": "1.0.0",
+  "description": "LINE webhook handler for RepiMEMO as an independent Cloud Function",
+  "type": "module",
+  "main": "index.mjs",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@line/bot-sdk": "^8.4.0",
+    "firebase-admin": "^12.0.0"
+  }
+}
