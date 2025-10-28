@@ -23,6 +23,7 @@ jobs:
       LINE_CHANNEL_SECRET_REPI: ${{ secrets.LINE_CHANNEL_SECRET_REPI }}
       LINE_CHANNEL_ACCESS_TOKEN_REPI: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN_REPI }}
       FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     steps:
       - name: Checkout
@@ -77,17 +78,30 @@ jobs:
       - name: "Deploy Cloud Functions v2 (repi-webhook)"
         run: |
           set -euo pipefail
+          : "${PROJECT_ID:?PROJECT_ID missing}"
+          : "${REGION:?REGION missing}"
+          : "${FUNCTION_NAME:?FUNCTION_NAME missing}"
+          : "${RUNTIME_SA:?RUNTIME_SA missing}"
+          : "${FIREBASE_PROJECT_ID:?FIREBASE_PROJECT_ID missing}"
+          : "${LINE_CHANNEL_SECRET_REPI:?LINE_CHANNEL_SECRET_REPI missing}"
+          : "${LINE_CHANNEL_ACCESS_TOKEN_REPI:?LINE_CHANNEL_ACCESS_TOKEN_REPI missing}"
+          : "${OPENAI_API_KEY:?OPENAI_API_KEY missing}"
+
           SOURCE="${{ github.workspace }}/cloud/functions/repi-webhook"
+
           gcloud functions deploy "${FUNCTION_NAME}" \
             --gen2 \
             --region="${REGION}" \
             --runtime=nodejs20 \
             --service-account="${RUNTIME_SA}" \
-            --set-env-vars "FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID},LINE_CHANNEL_SECRET_REPI=${{ secrets.LINE_CHANNEL_SECRET_REPI }},LINE_CHANNEL_ACCESS_TOKEN_REPI=${{ secrets.LINE_CHANNEL_ACCESS_TOKEN_REPI }}" \
+            --source="${SOURCE}" \
+            --entry-point=repiWebhook \
+            --trigger-http \
+            --allow-unauthenticated \
+            --set-env-vars "FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID},OPENAI_API_KEY=${OPENAI_API_KEY},LINE_CHANNEL_SECRET_REPI=${LINE_CHANNEL_SECRET_REPI},LINE_CHANNEL_ACCESS_TOKEN_REPI=${LINE_CHANNEL_ACCESS_TOKEN_REPI}" \
             --concurrency=1 \
             --max-instances=5 \
-            --timeout=60 \
-            --source="${SOURCE}"
+            --timeout=60
 
       - name: "Show function URL"
         run: |

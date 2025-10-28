@@ -16,6 +16,8 @@
 
 GitHub Actions では `${{ vars.GCP_LINE_FUNCTION_NAME_REPI }}` を Cloud Functions 名として利用してください。
 
+Cloud Functions のエントリーポイントは `repiWebhook` です。GitHub Actions の `Deploy Cloud Functions v2 (repi-webhook)` ステップでは、必須のシークレット・変数がすべて存在するか事前に検証し、不足している場合はデプロイを停止します。
+
 ## ローカル開発メモ
 ```bash
 npm install
