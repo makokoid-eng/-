@@ -117,3 +117,4 @@ jobs:
           URL=$(gcloud functions describe "${FUNCTION_NAME}" --region="${REGION}" --format="value(serviceConfig.uri)")
           echo "FUNCTION_URL=${URL}"
           echo "FUNCTION_URL=${URL}" >> "$GITHUB_OUTPUT"
+
