@@ -1,11 +1,11 @@
-name: Deploy Repi LINE webhook to Cloud Functions
+name: "Deploy Repi LINE webhook to Cloud Functions"
 
 on:
   push:
     branches: [ main ]
     paths:
-      - 'cloud/functions/repi-webhook/**'
-      - '.github/workflows/line-repi-deploy.yml'
+      - "cloud/functions/repi-webhook/**"
+      - ".github/workflows/line-repi-deploy.yml"
   workflow_dispatch:
 
 permissions:
@@ -26,23 +26,23 @@ jobs:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     steps:
-      - name: Checkout
+      - name: "Checkout"
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: "Set up Node.js"
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
-      - name: Install gcloud
+      - name: "Install gcloud"
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Authenticate to Google Cloud (JSON key)
+      - name: "Authenticate to Google Cloud (JSON key)"
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
-      - name: gcloud init
+      - name: "gcloud init"
         run: |
           set -euo pipefail
           echo "Initializing gcloud..."
@@ -50,7 +50,7 @@ jobs:
           gcloud config set functions/region "${REGION}"
           gcloud --version
 
-      - name: Preflight: check service account
+      - name: "Preflight: check service account"
         run: |
           set -euo pipefail
           echo "PROJECT_ID=${PROJECT_ID}"
@@ -58,7 +58,7 @@ jobs:
           gcloud iam service-accounts describe "${RUNTIME_SA}" --format="value(email)" >/dev/null
           echo "OK: service account exists"
 
-      - name: Preflight: ensure package.json exists
+      - name: "Preflight: ensure package.json exists"
         run: |
           set -euo pipefail
           SOURCE="${{ github.workspace }}/cloud/functions/repi-webhook"
@@ -66,7 +66,7 @@ jobs:
           test -f "${SOURCE}/package.json" || { echo "package.json not found under ${SOURCE}"; exit 1; }
           echo "OK: package.json found"
 
-      - name: Install dependencies (function)
+      - name: "Install dependencies (function)"
         working-directory: cloud/functions/repi-webhook
         run: |
           set -euo pipefail
@@ -76,7 +76,7 @@ jobs:
             npm install
           fi
 
-      - name: Debug env/vars presence
+      - name: "Debug env/vars presence"
         run: |
           set -euo pipefail
           echo "PROJECT_ID=${PROJECT_ID:-<empty>}"
@@ -85,13 +85,11 @@ jobs:
           echo "RUNTIME_SA=${RUNTIME_SA:-<empty>}"
           echo "FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-<empty>}"
 
-      - name: Deploy Cloud Functions v2 (repi-webhook)
+      - name: "Deploy Cloud Functions v2 (repi-webhook)"
         run: |
           set -euo pipefail
           SOURCE="${{ github.workspace }}/cloud/functions/repi-webhook"
-
-          # Default fallback if FUNCTION_NAME is empty
-          FN="${FUNCTION_NAME:-repiWebhook}"
+          FN="${FUNCTION_NAME:-repiWebhook}"   # fallback
 
           echo "Deploying function: ${FN}"
 
@@ -109,7 +107,7 @@ jobs:
             --max-instances=5 \
             --timeout=60
 
-      - name: Show function URL
+      - name: "Show function URL"
         run: |
           set -euo pipefail
           FN="${FUNCTION_NAME:-repiWebhook}"
