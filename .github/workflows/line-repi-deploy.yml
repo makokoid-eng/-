@@ -45,6 +45,7 @@ jobs:
       - name: gcloud init
         run: |
           set -euo pipefail
+          echo "Initializing gcloud..."
           gcloud config set project "${PROJECT_ID}"
           gcloud config set functions/region "${REGION}"
           gcloud --version
@@ -87,18 +88,14 @@ jobs:
       - name: Deploy Cloud Functions v2 (repi-webhook)
         run: |
           set -euo pipefail
-          : "${PROJECT_ID:?PROJECT_ID missing}"
-          : "${REGION:?REGION missing}"
-          : "${FUNCTION_NAME:?FUNCTION_NAME missing}"
-          : "${RUNTIME_SA:?RUNTIME_SA missing}"
-          : "${FIREBASE_PROJECT_ID:?FIREBASE_PROJECT_ID missing}"
-          : "${LINE_CHANNEL_SECRET_REPI:?LINE_CHANNEL_SECRET_REPI missing}"
-          : "${LINE_CHANNEL_ACCESS_TOKEN_REPI:?LINE_CHANNEL_ACCESS_TOKEN_REPI missing}"
-          : "${OPENAI_API_KEY:?OPENAI_API_KEY missing}"
-
           SOURCE="${{ github.workspace }}/cloud/functions/repi-webhook"
 
-          gcloud functions deploy "${FUNCTION_NAME}" \
+          # Default fallback if FUNCTION_NAME is empty
+          FN="${FUNCTION_NAME:-repiWebhook}"
+
+          echo "Deploying function: ${FN}"
+
+          gcloud functions deploy "${FN}" \
             --gen2 \
             --region="${REGION}" \
             --runtime=nodejs20 \
@@ -114,7 +111,8 @@ jobs:
 
       - name: Show function URL
         run: |
-          URL=$(gcloud functions describe "${FUNCTION_NAME}" --region="${REGION}" --format="value(serviceConfig.uri)")
+          set -euo pipefail
+          FN="${FUNCTION_NAME:-repiWebhook}"
+          URL=$(gcloud functions describe "${FN}" --region="${REGION}" --format="value(serviceConfig.uri)")
           echo "FUNCTION_URL=${URL}"
           echo "FUNCTION_URL=${URL}" >> "$GITHUB_OUTPUT"
-
