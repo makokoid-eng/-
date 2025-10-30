@@ -74,6 +74,14 @@ jobs:
           else
             npm install
           fi
+　　  - name: Debug env/vars presence
+        run: |
+          set -euo pipefail
+          echo "PROJECT_ID=${PROJECT_ID:-<empty>}"
+          echo "REGION=${REGION:-<empty>}"
+          echo "FUNCTION_NAME=${FUNCTION_NAME:-<empty>}"
+          echo "RUNTIME_SA=${RUNTIME_SA:-<empty>}"
+          echo "FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-<empty>}"
 
       - name: "Deploy Cloud Functions v2 (repi-webhook)"
         run: |
