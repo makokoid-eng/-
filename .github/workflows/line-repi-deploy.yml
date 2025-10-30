@@ -20,9 +20,9 @@ jobs:
       REGION: ${{ vars.GCP_REGION }}
       FUNCTION_NAME: ${{ vars.GCP_LINE_FUNCTION_NAME_REPI }}
       RUNTIME_SA: ${{ vars.GCP_RUNTIME_SA }}
+      FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
       LINE_CHANNEL_SECRET_REPI: ${{ secrets.LINE_CHANNEL_SECRET_REPI }}
       LINE_CHANNEL_ACCESS_TOKEN_REPI: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN_REPI }}
-      FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
     steps:
@@ -42,14 +42,14 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
-      - name: "gcloud init"
+      - name: gcloud init
         run: |
           set -euo pipefail
           gcloud config set project "${PROJECT_ID}"
           gcloud config set functions/region "${REGION}"
           gcloud --version
 
-      - name: "Preflight: check service account"
+      - name: Preflight: check service account
         run: |
           set -euo pipefail
           echo "PROJECT_ID=${PROJECT_ID}"
@@ -57,7 +57,7 @@ jobs:
           gcloud iam service-accounts describe "${RUNTIME_SA}" --format="value(email)" >/dev/null
           echo "OK: service account exists"
 
-      - name: "Preflight: ensure package.json exists"
+      - name: Preflight: ensure package.json exists
         run: |
           set -euo pipefail
           SOURCE="${{ github.workspace }}/cloud/functions/repi-webhook"
@@ -74,7 +74,8 @@ jobs:
           else
             npm install
           fi
-　　  - name: Debug env/vars presence
+
+      - name: Debug env/vars presence
         run: |
           set -euo pipefail
           echo "PROJECT_ID=${PROJECT_ID:-<empty>}"
@@ -83,7 +84,7 @@ jobs:
           echo "RUNTIME_SA=${RUNTIME_SA:-<empty>}"
           echo "FIREBASE_PROJECT_ID=${FIREBASE_PROJECT_ID:-<empty>}"
 
-      - name: "Deploy Cloud Functions v2 (repi-webhook)"
+      - name: Deploy Cloud Functions v2 (repi-webhook)
         run: |
           set -euo pipefail
           : "${PROJECT_ID:?PROJECT_ID missing}"
@@ -111,7 +112,7 @@ jobs:
             --max-instances=5 \
             --timeout=60
 
-    　　  - name: "Show function URL"
+      - name: Show function URL
         run: |
           URL=$(gcloud functions describe "${FUNCTION_NAME}" --region="${REGION}" --format="value(serviceConfig.uri)")
           echo "FUNCTION_URL=${URL}"
